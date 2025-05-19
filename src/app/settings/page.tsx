@@ -1,178 +1,159 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { getSupabaseClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+
+interface UserSettings {
+  id: string
+  user_id: string
+  notifications_enabled: boolean
+  location_tracking_enabled: boolean
+  dark_mode_enabled: boolean
+  emergency_alerts_enabled: boolean
+  created_at: string
+}
 
 export default function SettingsPage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
+  const [settings, setSettings] = useState<UserSettings | null>(null)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const [settings, setSettings] = useState({
-    notifications: true,
-    locationTracking: true,
-    darkMode: false,
-    emergencyAlerts: true,
-    dataSharing: false,
-  })
+  useEffect(() => {
+    fetchSettings()
+  }, [])
 
-  const handleToggle = (key: keyof typeof settings) => {
-    setSettings((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }))
-  }
-
-  const handleSave = async () => {
-    try {
-      setLoading(true)
-      // Here you would typically save the settings to your backend
-      await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulated API call
-      setSuccess('Settings saved successfully')
-    } catch (error: any) {
-      setError(error.message)
-    } finally {
+  async function fetchSettings() {
+    setLoading(true)
+    setError('')
+    const supabase = getSupabaseClient()
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      setError('Not logged in')
       setLoading(false)
+      router.push('/login')
+      return
     }
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+    if (error) {
+      // If not found, create default settings
+      if (error.code === 'PGRST116' || error.message.includes('No rows')) {
+        const { data: newSettings, error: insertError } = await supabase
+          .from('user_settings')
+          .insert({
+            user_id: user.id,
+            notifications_enabled: true,
+            location_tracking_enabled: true,
+            dark_mode_enabled: false,
+            emergency_alerts_enabled: true,
+          })
+          .select()
+          .single()
+        if (insertError || !newSettings || !newSettings.id) {
+          setError('Failed to create settings.')
+          setSettings(null)
+        } else {
+          setSettings(newSettings as unknown as UserSettings)
+        }
+      } else {
+        setError('Failed to load settings.')
+        setSettings(null)
+      }
+    } else {
+      if (!data || !data.id) {
+        setError('Settings not found.')
+        setSettings(null)
+      } else {
+        setSettings(data as unknown as UserSettings)
+      }
+    }
+    setLoading(false)
   }
+
+  function handleToggle(key: keyof Omit<UserSettings, 'id' | 'user_id' | 'created_at'>) {
+    if (!settings) return
+    setSettings({ ...settings, [key]: !settings[key] })
+  }
+
+  async function handleSave() {
+    setError('')
+    setSuccess('')
+    if (!settings) return
+    setLoading(true)
+    const supabase = getSupabaseClient()
+    const { error } = await supabase
+      .from('user_settings')
+      .update({
+        notifications_enabled: settings.notifications_enabled,
+        location_tracking_enabled: settings.location_tracking_enabled,
+        dark_mode_enabled: settings.dark_mode_enabled,
+        emergency_alerts_enabled: settings.emergency_alerts_enabled,
+      })
+      .eq('id', settings.id)
+    if (error) {
+      setError('Failed to save settings.')
+    } else {
+      setSuccess('Settings saved!')
+    }
+    setLoading(false)
+  }
+
+  if (loading) return <div>Loading...</div>
+  if (error) return <div className="text-red-500">{error}</div>
+  if (!settings) return <div>No settings found.</div>
 
   return (
-    <div className="p-4 space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
-
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow space-y-6">
-        {/* Notifications */}
+    <div className="p-4 max-w-2xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Settings</h1>
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow space-y-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Notifications</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Receive alerts about your health metrics
-            </p>
-          </div>
-          <button
-            onClick={() => handleToggle('notifications')}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-              settings.notifications ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                settings.notifications ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <span>Notifications</span>
+          <input
+            type="checkbox"
+            checked={settings.notifications_enabled}
+            onChange={() => handleToggle('notifications_enabled')}
+          />
         </div>
-
-        {/* Location Tracking */}
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Location Tracking</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Allow the app to track your location
-            </p>
-          </div>
-          <button
-            onClick={() => handleToggle('locationTracking')}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-              settings.locationTracking ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                settings.locationTracking ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <span>Location Tracking</span>
+          <input
+            type="checkbox"
+            checked={settings.location_tracking_enabled}
+            onChange={() => handleToggle('location_tracking_enabled')}
+          />
         </div>
-
-        {/* Dark Mode */}
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Dark Mode</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Switch between light and dark themes
-            </p>
-          </div>
-          <button
-            onClick={() => handleToggle('darkMode')}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-              settings.darkMode ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                settings.darkMode ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <span>Dark Mode</span>
+          <input
+            type="checkbox"
+            checked={settings.dark_mode_enabled}
+            onChange={() => handleToggle('dark_mode_enabled')}
+          />
         </div>
-
-        {/* Emergency Alerts */}
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Emergency Alerts</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Receive critical health alerts
-            </p>
-          </div>
-          <button
-            onClick={() => handleToggle('emergencyAlerts')}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-              settings.emergencyAlerts ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                settings.emergencyAlerts ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
-        </div>
-
-        {/* Data Sharing */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Data Sharing</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Share your health data with healthcare providers
-            </p>
-          </div>
-          <button
-            onClick={() => handleToggle('dataSharing')}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-              settings.dataSharing ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                settings.dataSharing ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <span>Emergency Alerts</span>
+          <input
+            type="checkbox"
+            checked={settings.emergency_alerts_enabled}
+            onChange={() => handleToggle('emergency_alerts_enabled')}
+          />
         </div>
       </div>
-
-      {/* Save Button */}
       <button
+        className="mt-6 bg-blue-600 text-white px-4 py-2 rounded"
         onClick={handleSave}
         disabled={loading}
-        className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? 'Saving...' : 'Save Changes'}
       </button>
-
-      {error && (
-        <div className="bg-red-50 dark:bg-red-900/50 text-red-500 dark:text-red-400 p-4 rounded-xl">
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="bg-green-50 dark:bg-green-900/50 text-green-500 dark:text-green-400 p-4 rounded-xl">
-          {success}
-        </div>
-      )}
+      {success && <div className="text-green-600 mt-2">{success}</div>}
+      {error && <div className="text-red-500 mt-2">{error}</div>}
     </div>
   )
-} 
+}
