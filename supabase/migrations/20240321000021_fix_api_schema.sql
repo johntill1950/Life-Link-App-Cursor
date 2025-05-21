@@ -2,14 +2,14 @@
 CREATE SCHEMA IF NOT EXISTS api;
 
 -- Drop existing policies if they exist
-DROP POLICY IF EXISTS "Users can view their own details" ON api.user_details;
-DROP POLICY IF EXISTS "Users can update their own details" ON api.user_details;
-DROP POLICY IF EXISTS "Users can view their own emergency contacts" ON api.emergency_contacts;
-DROP POLICY IF EXISTS "Users can update their own emergency contacts" ON api.emergency_contacts;
-DROP POLICY IF EXISTS "Users can view their own alarm settings" ON api.alarm_settings;
-DROP POLICY IF EXISTS "Users can update their own alarm settings" ON api.alarm_settings;
-DROP POLICY IF EXISTS "Users can view their own alarm history" ON api.alarm_history;
-DROP POLICY IF EXISTS "Users can update their own alarm history" ON api.alarm_history;
+DROP POLICY IF EXISTS "Users can view their own details" ON public.user_details;
+DROP POLICY IF EXISTS "Users can update their own details" ON public.user_details;
+DROP POLICY IF EXISTS "Users can view their own emergency contacts" ON public.emergency_contacts;
+DROP POLICY IF EXISTS "Users can update their own emergency contacts" ON public.emergency_contacts;
+DROP POLICY IF EXISTS "Users can view their own alarm settings" ON public.alarm_settings;
+DROP POLICY IF EXISTS "Users can update their own alarm settings" ON public.alarm_settings;
+DROP POLICY IF EXISTS "Users can view their own alarm history" ON public.alarm_history;
+DROP POLICY IF EXISTS "Users can update their own alarm history" ON public.alarm_history;
 
 -- Move tables from public to api schema
 ALTER TABLE IF EXISTS public.about_content SET SCHEMA api;
@@ -68,29 +68,29 @@ ALTER TABLE api.emergency_contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE api.alarm_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE api.alarm_history ENABLE ROW LEVEL SECURITY;
 
--- Create RLS policies
-CREATE POLICY "Users can view their own details" ON api.user_details
+-- Recreate policies in public schema
+CREATE POLICY "Users can view their own details" ON public.user_details
     FOR SELECT USING (auth.uid() = id);
 
-CREATE POLICY "Users can update their own details" ON api.user_details
+CREATE POLICY "Users can update their own details" ON public.user_details
     FOR UPDATE USING (auth.uid() = id);
 
-CREATE POLICY "Users can view their own emergency contacts" ON api.emergency_contacts
+CREATE POLICY "Users can view their own emergency contacts" ON public.emergency_contacts
     FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own emergency contacts" ON api.emergency_contacts
+CREATE POLICY "Users can update their own emergency contacts" ON public.emergency_contacts
     FOR UPDATE USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can view their own alarm settings" ON api.alarm_settings
+CREATE POLICY "Users can view their own alarm settings" ON public.alarm_settings
     FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own alarm settings" ON api.alarm_settings
+CREATE POLICY "Users can update their own alarm settings" ON public.alarm_settings
     FOR UPDATE USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can view their own alarm history" ON api.alarm_history
+CREATE POLICY "Users can view their own alarm history" ON public.alarm_history
     FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own alarm history" ON api.alarm_history
+CREATE POLICY "Users can update their own alarm history" ON public.alarm_history
     FOR UPDATE USING (auth.uid() = user_id);
 
 -- Add validation functions

@@ -11,9 +11,12 @@ const initialProfile = {
   address3: "",
   country: "",
   postal_code: "",
-  emergency_contact1: "",
-  emergency_contact2: "",
-  emergency_contact3: "",
+  emergency_contact1_name: "",
+  emergency_contact1_phone: "",
+  emergency_contact2_name: "",
+  emergency_contact2_phone: "",
+  emergency_contact3_name: "",
+  emergency_contact3_phone: "",
 };
 
 export default function ProfilePage() {
@@ -142,24 +145,51 @@ export default function ProfilePage() {
         />
         <input
           type="text"
-          placeholder="Emergency Contact 1"
-          value={profile.emergency_contact1}
-          onChange={e => handleChange("emergency_contact1", e.target.value)}
+          placeholder="Emergency Contact 1 Name"
+          value={profile.emergency_contact1_name}
+          onChange={e => handleChange("emergency_contact1_name", e.target.value)}
           className="w-full p-2 border rounded"
         />
         <input
-          type="text"
-          placeholder="Emergency Contact 2"
-          value={profile.emergency_contact2}
-          onChange={e => handleChange("emergency_contact2", e.target.value)}
+          type="tel"
+          placeholder="Emergency Contact 1 Mobile # (e.g. +61 412345678)"
+          value={profile.emergency_contact1_phone}
+          onChange={e => handleChange("emergency_contact1_phone", e.target.value)}
           className="w-full p-2 border rounded"
+          pattern="^\+\d{1,3} ?\d{4,14}$"
+          inputMode="tel"
         />
         <input
           type="text"
-          placeholder="Emergency Contact 3"
-          value={profile.emergency_contact3}
-          onChange={e => handleChange("emergency_contact3", e.target.value)}
+          placeholder="Emergency Contact 2 Name"
+          value={profile.emergency_contact2_name}
+          onChange={e => handleChange("emergency_contact2_name", e.target.value)}
           className="w-full p-2 border rounded"
+        />
+        <input
+          type="tel"
+          placeholder="Emergency Contact 2 Mobile # (e.g. +61 412345678)"
+          value={profile.emergency_contact2_phone}
+          onChange={e => handleChange("emergency_contact2_phone", e.target.value)}
+          className="w-full p-2 border rounded"
+          pattern="^\+\d{1,3} ?\d{4,14}$"
+          inputMode="tel"
+        />
+        <input
+          type="text"
+          placeholder="Emergency Contact 3 Name"
+          value={profile.emergency_contact3_name}
+          onChange={e => handleChange("emergency_contact3_name", e.target.value)}
+          className="w-full p-2 border rounded"
+        />
+        <input
+          type="tel"
+          placeholder="Emergency Contact 3 Mobile # (e.g. +61 412345678)"
+          value={profile.emergency_contact3_phone}
+          onChange={e => handleChange("emergency_contact3_phone", e.target.value)}
+          className="w-full p-2 border rounded"
+          pattern="^\+\d{1,3} ?\d{4,14}$"
+          inputMode="tel"
         />
         <button
           onClick={handleSave}
