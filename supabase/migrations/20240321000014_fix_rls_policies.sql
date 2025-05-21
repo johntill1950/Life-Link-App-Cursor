@@ -12,22 +12,22 @@ ON public.profiles
 FOR UPDATE
 USING (auth.uid() = id);
 
--- Enable RLS on user_settings table
-ALTER TABLE public.user_settings ENABLE ROW LEVEL SECURITY;
+-- Enable RLS on settings table
+ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
 
--- Create policy for user_settings
+-- Create policy for settings
 CREATE POLICY "Users can view their own settings"
-ON public.user_settings
+ON public.settings
 FOR SELECT
 USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can update their own settings"
-ON public.user_settings
+ON public.settings
 FOR UPDATE
 USING (auth.uid() = user_id);
 
 -- Allow insert for authenticated users
 CREATE POLICY "Users can insert their own settings"
-ON public.user_settings
+ON public.settings
 FOR INSERT
 WITH CHECK (auth.uid() = user_id); 

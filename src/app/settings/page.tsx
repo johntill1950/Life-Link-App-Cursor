@@ -37,7 +37,7 @@ export default function SettingsPage() {
       return
     }
     const { data, error } = await supabase
-      .from('user_settings')
+      .from('settings')
       .select('*')
       .eq('user_id', user.id)
       .single()
@@ -45,7 +45,7 @@ export default function SettingsPage() {
       // If not found, create default settings
       if (error.code === 'PGRST116' || error.message.includes('No rows')) {
         const { data: newSettings, error: insertError } = await supabase
-          .from('user_settings')
+          .from('settings')
           .insert({
             user_id: user.id,
             notifications_enabled: true,
@@ -88,7 +88,7 @@ export default function SettingsPage() {
     setLoading(true)
     const supabase = getSupabaseClient()
     const { error } = await supabase
-      .from('user_settings')
+      .from('settings')
       .update({
         notifications_enabled: settings.notifications_enabled,
         location_tracking_enabled: settings.location_tracking_enabled,

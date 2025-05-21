@@ -1,5 +1,5 @@
 -- Function to safely move a table if it doesn't exist in the target schema
-CREATE OR REPLACE FUNCTION api.safe_move_table(
+CREATE OR REPLACE FUNCTION public.safe_move_table(
     source_schema text,
     target_schema text,
     table_name text
@@ -21,11 +21,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Safely move tables
-SELECT api.safe_move_table('public', 'api', 'about_content');
-SELECT api.safe_move_table('public', 'api', 'health_data');
-SELECT api.safe_move_table('public', 'api', 'profiles');
-SELECT api.safe_move_table('public', 'api', 'user_settings');
+-- Grant execute permissions
+GRANT EXECUTE ON FUNCTION public.safe_move_table(text, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.safe_move_table(text, text, text) TO service_role;
+
+-- Move tables from api to public schema if they exist
+SELECT public.safe_move_table('api', 'public', 'user_details');
+SELECT public.safe_move_table('api', 'public', 'emergency_contacts');
+SELECT public.safe_move_table('api', 'public', 'alarm_settings');
+SELECT public.safe_move_table('api', 'public', 'alarm_history');
 
 -- Drop the temporary function
-DROP FUNCTION api.safe_move_table(text, text, text); 
+DROP FUNCTION IF EXISTS public.safe_move_table(text, text, text); 

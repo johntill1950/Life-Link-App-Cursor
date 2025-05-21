@@ -8,7 +8,7 @@ import 'react-quill/dist/quill.snow.css'
 const DUMMY_ABOUT = `<h2>About Life-Link.app</h2><p>This is <b>dummy about text</b> for demonstration. You can edit this as an admin.</p>`
 const DUMMY_HELP = `<h2>Help</h2><ul><li>Contact support at support@example.com</li><li>Read the FAQ</li></ul>`
 
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false })
+const ReactQuill: any = dynamic(() => import('react-quill'), { ssr: false })
 
 export default function AboutPage() {
   const [about, setAbout] = useState('')
@@ -71,29 +71,23 @@ export default function AboutPage() {
       // First, get the existing records to get their IDs
       const { data: existingData, error: fetchError } = await supabase
         .from('about_content')
-        .select('id, section')
-      
-      if (fetchError) {
-        console.error('Error fetching existing data:', fetchError)
-        throw fetchError
-      }
-
-      console.log('Existing data:', existingData)
+        .select('id, section, content, last_updated')
+      const existing: { id?: number; section: string; content: string; last_updated: string }[] = existingData || []
 
       // Find the IDs for about and help sections
-      const aboutId = existingData?.find(row => row.section === 'about')?.id
-      const helpId = existingData?.find(row => row.section === 'help')?.id
+      const aboutId = existing.find(row => row.section === 'about')?.id ?? undefined
+      const helpId = existing.find(row => row.section === 'help')?.id ?? undefined
 
       console.log('About ID:', aboutId, 'Help ID:', helpId)
 
       // Prepare the data for upsert
-      const aboutData = {
+      const aboutData: any = {
         section: 'about',
         content: about,
         last_updated: new Date().toISOString()
       }
 
-      const helpData = {
+      const helpData: any = {
         section: 'help',
         content: help,
         last_updated: new Date().toISOString()
@@ -109,7 +103,7 @@ export default function AboutPage() {
       // Upsert about
       const { error: aboutError } = await supabase
         .from('about_content')
-        .upsert(aboutData)
+        .upsert(aboutData as any)
 
       if (aboutError) {
         console.error('Error saving about section:', aboutError)
@@ -119,7 +113,7 @@ export default function AboutPage() {
       // Upsert help
       const { error: helpError } = await supabase
         .from('about_content')
-        .upsert(helpData)
+        .upsert(helpData as any)
 
       if (helpError) {
         console.error('Error saving help section:', helpError)
@@ -145,10 +139,9 @@ export default function AboutPage() {
   }
 
   return (
-    <div className="p-4 max-w-2xl mx-auto space-y-8">
+    <div className="p-4 max-w-2xl mx-auto space-y-8 pb-24">
       <div>
         <label className="block text-sm font-medium mb-1">About</label>
-        {/* @ts-expect-error: react-quill has no types for v2+ */}
         {isAdmin ? (
           <ReactQuill value={about} onChange={setAbout} theme="snow" />
         ) : (
@@ -157,7 +150,6 @@ export default function AboutPage() {
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">Help</label>
-        {/* @ts-expect-error: react-quill has no types for v2+ */}
         {isAdmin ? (
           <ReactQuill value={help} onChange={setHelp} theme="snow" />
         ) : (
@@ -178,6 +170,18 @@ export default function AboutPage() {
           )}
         </>
       )}
+      <style jsx global>{`
+        .ql-container, .ql-editor, .ql-toolbar {
+          z-index: 1 !important;
+        }
+        .ql-container {
+          min-height: 12em;
+          height: 12em;
+          max-height: 40em;
+          resize: vertical;
+          overflow-y: auto;
+        }
+      `}</style>
     </div>
   )
 }

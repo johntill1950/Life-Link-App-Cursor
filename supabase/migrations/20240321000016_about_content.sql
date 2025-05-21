@@ -1,5 +1,9 @@
--- Create about_content table
-CREATE TABLE IF NOT EXISTS about_content (
+-- Drop existing tables to ensure clean state
+DROP TABLE IF EXISTS public.about_content CASCADE;
+DROP TABLE IF EXISTS api.about_content CASCADE;
+
+-- Create about_content table in public schema
+CREATE TABLE public.about_content (
   id INTEGER PRIMARY KEY,
   about TEXT,
   help TEXT,
@@ -8,7 +12,7 @@ CREATE TABLE IF NOT EXISTS about_content (
 );
 
 -- Insert initial content
-INSERT INTO about_content (id, about, help)
+INSERT INTO public.about_content (id, about, help)
 VALUES (
   1,
   'Life-Link.app is the work of a now retired, Advanced Life Support (ALS) paramedic from the State of Victoria in Australia, with 37 years of experience in pre-hospital care.
@@ -68,16 +72,25 @@ Regardless, John has vowed to support the app for as ling as he can and will mak
 ON CONFLICT (id) DO NOTHING;
 
 -- Create RLS policies
-ALTER TABLE about_content ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.about_content ENABLE ROW LEVEL SECURITY;
+
+-- Drop any existing policies
+DROP POLICY IF EXISTS "Allow public read access" ON public.about_content;
+DROP POLICY IF EXISTS "Allow admin update access" ON public.about_content;
+DROP POLICY IF EXISTS "Allow admin insert access" ON public.about_content;
 
 -- Allow anyone to read the content
-CREATE POLICY "Allow public read access" ON about_content
+CREATE POLICY "Allow public read access" ON public.about_content
   FOR SELECT USING (true);
 
 -- Only allow admins to update the content
-CREATE POLICY "Allow admin update access" ON about_content
+CREATE POLICY "Allow admin update access" ON public.about_content
   FOR UPDATE USING (auth.jwt() ->> 'role' = 'admin');
 
 -- Only allow admins to insert new content
-CREATE POLICY "Allow admin insert access" ON about_content
-  FOR INSERT WITH CHECK (auth.jwt() ->> 'role' = 'admin'); 
+CREATE POLICY "Allow admin insert access" ON public.about_content
+  FOR INSERT WITH CHECK (auth.jwt() ->> 'role' = 'admin');
+
+-- Grant necessary permissions
+GRANT ALL ON public.about_content TO authenticated;
+GRANT ALL ON public.about_content TO service_role; 

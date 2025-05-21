@@ -18,10 +18,10 @@ ON CONFLICT (id) DO UPDATE SET
   is_admin = EXCLUDED.is_admin;
 
 -- Add unique constraint on user_id
-ALTER TABLE public.user_settings ADD CONSTRAINT user_settings_user_id_key UNIQUE (user_id);
+ALTER TABLE public.settings ADD CONSTRAINT settings_user_id_key UNIQUE (user_id);
 
 -- Create settings for dev user
-INSERT INTO public.user_settings (user_id, notifications_enabled, location_tracking_enabled, dark_mode_enabled, emergency_alerts_enabled)
+INSERT INTO public.settings (user_id, notifications_enabled, location_tracking_enabled, dark_mode_enabled, emergency_alerts_enabled)
 SELECT 
   id,
   true,

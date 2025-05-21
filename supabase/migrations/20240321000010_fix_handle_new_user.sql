@@ -21,7 +21,7 @@ BEGIN
         (new.raw_user_meta_data->>'role') = 'admin'
     );
     
-    INSERT INTO public.user_settings (
+    INSERT INTO public.settings (
         user_id,
         notifications_enabled,
         location_tracking_enabled,
