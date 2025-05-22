@@ -117,103 +117,112 @@ export default function ProfilePage() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h2 className="text-2xl font-bold mb-6 dark:text-gray-100">Profile Information</h2>
           <form onSubmit={handleSave} className="space-y-4">
-            <input
-              type="text"
-              placeholder="Full Name"
-              value={profile.full_name}
-              onChange={e => handleChange("full_name", e.target.value)}
-              className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
-            />
-            <input
-              type="text"
-              placeholder="Username"
-              value={profile.username}
-              onChange={e => handleChange("username", e.target.value)}
-              className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
-            />
-            <input
-              type="text"
-              placeholder="Address 1"
-              value={profile.address1}
-              onChange={e => handleChange("address1", e.target.value)}
-              className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
-            />
-            <input
-              type="text"
-              placeholder="Address 2"
-              value={profile.address2}
-              onChange={e => handleChange("address2", e.target.value)}
-              className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
-            />
-            <input
-              type="text"
-              placeholder="Address 3"
-              value={profile.address3}
-              onChange={e => handleChange("address3", e.target.value)}
-              className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
-            />
-            <input
-              type="text"
-              placeholder="Country"
-              value={profile.country}
-              onChange={e => handleChange("country", e.target.value)}
-              className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
-            />
-            <input
-              type="text"
-              placeholder="Postal Code"
-              value={profile.postal_code}
-              onChange={e => handleChange("postal_code", e.target.value)}
-              className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
-            />
-            <input
-              type="text"
-              placeholder="Emergency Contact 1 Name"
-              value={profile.emergency_contact1_name}
-              onChange={e => handleChange("emergency_contact1_name", e.target.value)}
-              className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
-            />
-            <input
-              type="tel"
-              placeholder="Emergency Contact 1 Mobile # (e.g. +61 412345678)"
-              value={profile.emergency_contact1_phone}
-              onChange={e => handleChange("emergency_contact1_phone", e.target.value)}
-              className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
-              pattern="^\\+\\d{1,3} ?\\d{4,14}$"
-              inputMode="tel"
-            />
-            <input
-              type="text"
-              placeholder="Emergency Contact 2 Name"
-              value={profile.emergency_contact2_name}
-              onChange={e => handleChange("emergency_contact2_name", e.target.value)}
-              className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
-            />
-            <input
-              type="tel"
-              placeholder="Emergency Contact 2 Mobile # (e.g. +61 412345678)"
-              value={profile.emergency_contact2_phone}
-              onChange={e => handleChange("emergency_contact2_phone", e.target.value)}
-              className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
-              pattern="^\\+\\d{1,3} ?\\d{4,14}$"
-              inputMode="tel"
-            />
-            <input
-              type="text"
-              placeholder="Emergency Contact 3 Name"
-              value={profile.emergency_contact3_name}
-              onChange={e => handleChange("emergency_contact3_name", e.target.value)}
-              className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
-            />
-            <input
-              type="tel"
-              placeholder="Emergency Contact 3 Mobile # (e.g. +61 412345678)"
-              value={profile.emergency_contact3_phone}
-              onChange={e => handleChange("emergency_contact3_phone", e.target.value)}
-              className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
-              pattern="^\\+\\d{1,3} ?\\d{4,14}$"
-              inputMode="tel"
-            />
+            {/* Personal Info Group */}
+            <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 mb-4">
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={profile.full_name}
+                onChange={e => handleChange("full_name", e.target.value)}
+                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400 mb-2"
+              />
+              <input
+                type="text"
+                placeholder="Address 1"
+                value={profile.address1}
+                onChange={e => handleChange("address1", e.target.value)}
+                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400 mb-2"
+              />
+              <input
+                type="text"
+                placeholder="Address 2"
+                value={profile.address2}
+                onChange={e => handleChange("address2", e.target.value)}
+                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400 mb-2"
+              />
+              <input
+                type="text"
+                placeholder="Address 3"
+                value={profile.address3}
+                onChange={e => handleChange("address3", e.target.value)}
+                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400 mb-2"
+              />
+              <input
+                type="text"
+                placeholder="Country"
+                value={profile.country}
+                onChange={e => handleChange("country", e.target.value)}
+                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400 mb-2"
+              />
+              <input
+                type="text"
+                placeholder="Postal Code"
+                value={profile.postal_code}
+                onChange={e => handleChange("postal_code", e.target.value)}
+                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
+              />
+            </div>
+
+            {/* Emergency Contact 1 Group */}
+            <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 mb-4">
+              <input
+                type="text"
+                placeholder="Emergency Contact 1 Name"
+                value={profile.emergency_contact1_name}
+                onChange={e => handleChange("emergency_contact1_name", e.target.value)}
+                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400 mb-2"
+              />
+              <input
+                type="tel"
+                placeholder="Emergency Contact 1 Mobile # (e.g. +61 412345678)"
+                value={profile.emergency_contact1_phone}
+                onChange={e => handleChange("emergency_contact1_phone", e.target.value)}
+                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
+                pattern="^\\+\\d{1,3} ?\\d{4,14}$"
+                inputMode="tel"
+              />
+            </div>
+
+            {/* Emergency Contact 2 Group */}
+            <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 mb-4">
+              <input
+                type="text"
+                placeholder="Emergency Contact 2 Name"
+                value={profile.emergency_contact2_name}
+                onChange={e => handleChange("emergency_contact2_name", e.target.value)}
+                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400 mb-2"
+              />
+              <input
+                type="tel"
+                placeholder="Emergency Contact 2 Mobile # (e.g. +61 412345678)"
+                value={profile.emergency_contact2_phone}
+                onChange={e => handleChange("emergency_contact2_phone", e.target.value)}
+                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
+                pattern="^\\+\\d{1,3} ?\\d{4,14}$"
+                inputMode="tel"
+              />
+            </div>
+
+            {/* Emergency Contact 3 Group */}
+            <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 mb-4">
+              <input
+                type="text"
+                placeholder="Emergency Contact 3 Name"
+                value={profile.emergency_contact3_name}
+                onChange={e => handleChange("emergency_contact3_name", e.target.value)}
+                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400 mb-2"
+              />
+              <input
+                type="tel"
+                placeholder="Emergency Contact 3 Mobile # (e.g. +61 412345678)"
+                value={profile.emergency_contact3_phone}
+                onChange={e => handleChange("emergency_contact3_phone", e.target.value)}
+                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
+                pattern="^\\+\\d{1,3} ?\\d{4,14}$"
+                inputMode="tel"
+              />
+            </div>
+
             <button
               type="submit"
               disabled={saving}
