@@ -1,42 +1,94 @@
 'use client'
 
 import { useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function Register() {
   const [email, setEmail] = useState('')
+  const [confirmEmail, setConfirmEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [fullName, setFullName] = useState('')
-  const [username, setUsername] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [agreed, setAgreed] = useState(false)
   const router = useRouter()
-  const supabase = createClientComponentClient()
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
 
+    // Check if emails match
+    if (email !== confirmEmail) {
+      setError('Email addresses do not match.');
+      setLoading(false);
+      return;
+    }
+
+    // Check password strength
+    if (password.length < 8 || !/\d/.test(password)) {
+      setError('Password must be at least 8 characters and include a number.');
+      setLoading(false);
+      return;
+    }
+
+    // Check if terms are agreed
+    if (!agreed) {
+      setError('You must agree to the Terms of Service and Privacy Policy.');
+      setLoading(false);
+      return;
+    }
+
+    // Check for existing email
+    const { data: existingEmail } = await supabase
+      .from('profile')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (existingEmail) {
+      setError('Email already in use.');
+      setLoading(false);
+      return;
+    }
+
+    // Log form data
+    console.log('Registration attempt with:', {
+      email,
+      password: '***', // Don't log actual password
+      fullName
+    })
+
     try {
       // Sign up with Supabase Auth
+      console.log('Attempting Supabase auth signup...')
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
-            username: username || null,
           },
         },
+      })
+
+      console.log('Auth response:', {
+        success: !!authData,
+        error: authError ? authError.message : null,
+        userId: authData?.user?.id
       })
 
       if (authError) throw authError
 
       if (authData.user) {
-        console.log('authData:', authData)
+        console.log('Auth successful, creating profile...')
         // Create user profile in 'profile' table
         const { error: profileError } = await supabase
           .from('profile')
@@ -45,12 +97,17 @@ export default function Register() {
               id: authData.user.id,
               email: email,
               full_name: fullName,
-              username: username || null,
             },
           ])
 
+        console.log('Profile creation response:', {
+          success: !profileError,
+          error: profileError ? profileError.message : null
+        })
+
         if (profileError) throw profileError
 
+        console.log('Registration complete, redirecting to dashboard...')
         // Redirect to dashboard or confirmation page
         router.push('/dashboard')
       }
@@ -68,6 +125,10 @@ export default function Register() {
     }
   }
 
+  // Only show loading spinner when submitting
+  if (loading) return <div>Loading...</div>;
+
+  // Always render the form!
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -102,20 +163,47 @@ export default function Register() {
               />
             </div>
             <div>
+              <label htmlFor="confirmEmail" className="sr-only">
+                Confirm Email address
+              </label>
+              <input
+                id="confirmEmail"
+                name="confirmEmail"
+                type="email"
+                autoComplete="email"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Confirm Email address"
+                value={confirmEmail}
+                onChange={(e) => setConfirmEmail(e.target.value)}
+              />
+            </div>
+            <div>
               <label htmlFor="password" className="sr-only">
                 Password
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm pr-10"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => setShowPassword((show) => !show)}
+                  className="absolute inset-y-0 right-0 px-3 flex items-center text-sm text-gray-600 focus:outline-none"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
             <div>
               <label htmlFor="fullName" className="sr-only">
@@ -133,20 +221,19 @@ export default function Register() {
                 onChange={(e) => setFullName(e.target.value)}
               />
             </div>
-            <div>
-              <label htmlFor="username" className="sr-only">
-                Username (optional)
-              </label>
+            <div className="flex items-center mt-4">
               <input
-                id="username"
-                name="username"
-                type="text"
-                autoComplete="username"
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Username (optional)"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="terms"
+                name="terms"
+                type="checkbox"
+                checked={agreed}
+                onChange={e => setAgreed(e.target.checked)}
+                className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                required
               />
+              <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
+                I agree to the <a href="/terms" className="underline text-blue-600" target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href="/privacy" className="underline text-blue-600" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+              </label>
             </div>
           </div>
 

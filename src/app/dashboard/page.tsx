@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { format } from 'date-fns'
+import { getSupabaseClient } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 // Dummy data generator
 const generateDummyData = () => {
@@ -22,6 +24,9 @@ const generateDummyData = () => {
 }
 
 export default function DashboardPage() {
+  const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const router = useRouter();
   const [data, setData] = useState(generateDummyData())
   const [currentMetrics, setCurrentMetrics] = useState({
     heartRate: 75,
@@ -32,6 +37,17 @@ export default function DashboardPage() {
   })
 
   useEffect(() => {
+    async function checkUser() {
+      const supabase = getSupabaseClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setAuthLoading(false);
+      if (!user) {
+        router.push("/login");
+      }
+    }
+    checkUser();
+
     // Get actual location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -71,7 +87,10 @@ export default function DashboardPage() {
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, []);
+
+  if (authLoading) return <div>Loading...</div>;
+  if (!user) return null;
 
   const getGoogleMapsUrl = () => {
     const { lat, lng } = currentMetrics.coordinates

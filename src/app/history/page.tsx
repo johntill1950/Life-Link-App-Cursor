@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { format, subDays, subHours } from 'date-fns'
+import { getSupabaseClient } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 // Dummy data generator for 7 days
 const generateSevenDayData = () => {
@@ -53,12 +55,32 @@ const generateTwentyFourHourData = () => {
 }
 
 export default function HistoryPage() {
-  const [timeRange, setTimeRange] = useState<'24h' | '7d'>('7d')
-  const [selectedMetric, setSelectedMetric] = useState<'heartRate' | 'oxygen' | 'movement'>('heartRate')
-  const [sevenDayData] = useState(generateSevenDayData())
-  const [twentyFourHourData] = useState(generateTwentyFourHourData())
+  const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const router = useRouter();
 
-  const data = timeRange === '24h' ? twentyFourHourData : sevenDayData
+  const [timeRange, setTimeRange] = useState<'24h' | '7d'>('7d');
+  const [selectedMetric, setSelectedMetric] = useState<'heartRate' | 'oxygen' | 'movement'>('heartRate');
+  const [sevenDayData] = useState(generateSevenDayData());
+  const [twentyFourHourData] = useState(generateTwentyFourHourData());
+
+  const data = timeRange === '24h' ? twentyFourHourData : sevenDayData;
+
+  useEffect(() => {
+    async function checkUser() {
+      const supabase = getSupabaseClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setAuthLoading(false);
+      if (!user) {
+        router.push("/login");
+      }
+    }
+    checkUser();
+  }, []);
+
+  if (authLoading) return <div>Loading...</div>;
+  if (!user) return null;
 
   return (
     <div className="p-4 space-y-6">
@@ -151,21 +173,21 @@ export default function HistoryPage() {
                 <>
                   <Line
                     type="monotone"
-                    dataKey={`${selectedMetric}.min`}
+                    dataKey={`${selectedMetric}Min`}
                     stroke="#ef4444"
                     name="Min"
                   />
                   <Line
                     type="monotone"
-                    dataKey={`${selectedMetric}.max`}
+                    dataKey={`${selectedMetric}Max`}
                     stroke="#3b82f6"
                     name="Max"
                   />
                   <Line
                     type="monotone"
-                    dataKey={`${selectedMetric}.avg`}
+                    dataKey={`${selectedMetric}Avg`}
                     stroke="#10b981"
-                    name="Average"
+                    name="Avg"
                   />
                 </>
               )}
@@ -173,57 +195,6 @@ export default function HistoryPage() {
           </ResponsiveContainer>
         </div>
       </div>
-
-      {/* Stats Table */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow overflow-x-auto">
-        <table className="min-w-full">
-          <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-700">
-              <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
-                {timeRange === '24h' ? 'Time' : 'Date'}
-              </th>
-              {timeRange === '24h' ? (
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Value</th>
-              ) : (
-                <>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Min</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Max</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Average</th>
-                </>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((item) => {
-              const key = 'time' in item ? item.time : ('date' in item ? item.date : Math.random().toString())
-              return (
-                <tr key={key} className="border-b border-gray-200 dark:border-gray-700">
-                  <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
-                    {'time' in item ? item.time : ('date' in item ? item.date : '')}
-                  </td>
-                  {timeRange === '24h' ? (
-                    <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
-                      {typeof item[selectedMetric] === 'number' ? item[selectedMetric] : ''}
-                    </td>
-                  ) : (
-                    <>
-                      <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
-                        {typeof item[selectedMetric] === 'object' ? item[selectedMetric].min : ''}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
-                        {typeof item[selectedMetric] === 'object' ? item[selectedMetric].max : ''}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
-                        {typeof item[selectedMetric] === 'object' ? item[selectedMetric].avg : ''}
-                      </td>
-                    </>
-                  )}
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
     </div>
   )
-} 
+}
