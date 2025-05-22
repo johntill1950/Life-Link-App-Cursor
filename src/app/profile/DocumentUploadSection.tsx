@@ -93,23 +93,19 @@ export function DocumentUploadSection() {
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
-    console.log("Form submitted", { files, user });
-    
-    if (!user) {
-      setError("Please log in to upload documents");
-      return;
-    }
-    
-    if (!files.length) {
-      setError("Please select at least one file to upload");
-      return;
-    }
-    
+    if (uploading) return; // Prevent double submission
     setUploading(true);
     setUploadSuccess(false);
     setError(null);
-    
     try {
+      if (!user) {
+        setError("Please log in to upload documents");
+        return;
+      }
+      if (!files.length) {
+        setError("Please select at least one file to upload");
+        return;
+      }
       for (const file of files) {
         console.log("Uploading file:", file.name);
         const filePath = `user-${user.id}/${Date.now()}_${file.name}`;
@@ -160,6 +156,9 @@ export function DocumentUploadSection() {
         setUploadSuccess(true);
         setTimeout(() => setUploadSuccess(false), 3000);
         setFiles([]);
+        // Reset file input for Chrome
+        const fileInput = document.getElementById('file-upload') as HTMLInputElement | null;
+        if (fileInput) fileInput.value = '';
         await fetchDocsForUser(user);
       }
     } catch (error: any) {
@@ -249,49 +248,43 @@ export function DocumentUploadSection() {
       )}
 
       <div className="mt-6 min-h-[60px]">
-        {docsLoading ? (
-          <div className="flex justify-center items-center py-8">
-            <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-            </svg>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {uploadedDocs.map(doc => (
-              <div key={doc.id} className="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                <div className="flex-shrink-0">
-                  {doc.file_type.startsWith("image") ? (
-                    <div className="w-12 h-12 relative">
-                      <img
-                        src={imageUrls[doc.id] || "/placeholder-image.png"}
-                        alt={doc.file_name}
-                        className="w-12 h-12 object-cover rounded"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-12 h-12 flex items-center justify-center bg-gray-200 dark:bg-gray-600 rounded">
-                      <span className="text-2xl">📄</span>
-                    </div>
-                  )}
-                </div>
-                <div className="ml-4 flex-grow">
-                  <div className="text-sm font-medium dark:text-gray-100">{doc.file_name}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(doc.uploaded_at).toLocaleDateString()}
+        <div className="space-y-4">
+          {uploadedDocs.map(doc => (
+            <div key={doc.id} className="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+              <div className="flex-shrink-0">
+                {doc.file_type.startsWith("image") ? (
+                  <div className="w-12 h-12 relative">
+                    <img
+                      src={imageUrls[doc.id] || "/placeholder-image.png"}
+                      alt={doc.file_name}
+                      className="w-12 h-12 object-cover rounded"
+                    />
                   </div>
-                </div>
-                <button
-                  onClick={() => handleDelete(doc.id, doc.file_url)}
-                  disabled={deleting === doc.id || !user}
-                  className="ml-4 px-3 py-1 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50 border border-red-600 dark:border-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                >
-                  {deleting === doc.id ? "Deleting..." : "Delete"}
-                </button>
+                ) : (
+                  <div className="w-12 h-12 flex items-center justify-center bg-gray-200 dark:bg-gray-600 rounded">
+                    <span className="text-2xl">📄</span>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
+              <div className="ml-4 flex-grow">
+                <div className="text-sm font-medium dark:text-gray-100">{doc.file_name}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  {new Date(doc.uploaded_at).toLocaleDateString()}
+                </div>
+              </div>
+              <button
+                onClick={() => handleDelete(doc.id, doc.file_url)}
+                disabled={deleting === doc.id || !user}
+                className="ml-4 px-3 py-1 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50 border border-red-600 dark:border-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              >
+                {deleting === doc.id ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          ))}
+          {uploadedDocs.length === 0 && (
+            <div className="text-center text-gray-400 dark:text-gray-500 py-8">No documents uploaded yet.</div>
+          )}
+        </div>
       </div>
     </div>
   );
