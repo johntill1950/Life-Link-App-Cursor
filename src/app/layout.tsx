@@ -1,26 +1,17 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
-import { Layout } from '../components/layout/Layout'
+import { Inter } from "next/font/google";
+import { Layout } from "../components/layout/Layout";
+import { SupabaseProvider } from "../components/SupabaseProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "Life Link - Health Monitoring",
-  description: "Monitor your health metrics in real-time",
-};
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Layout>
-          {children}
-        </Layout>
+        <SupabaseProvider>
+          <Layout>{children}</Layout>
+        </SupabaseProvider>
       </body>
     </html>
   );

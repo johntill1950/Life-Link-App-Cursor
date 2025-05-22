@@ -25,6 +25,16 @@ export default function SettingsPage() {
     fetchSettings()
   }, [])
 
+  useEffect(() => {
+    if (settings) {
+      if (settings.dark_mode_enabled) {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+    }
+  }, [settings?.dark_mode_enabled])
+
   async function fetchSettings() {
     setLoading(true)
     setError('')
@@ -110,10 +120,10 @@ export default function SettingsPage() {
 
   return (
     <div className="p-4 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Settings</h1>
+      <h1 className="text-2xl font-bold mb-4 dark:text-gray-100">Settings</h1>
       <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow space-y-4">
         <div className="flex items-center justify-between">
-          <span>Notifications</span>
+          <span className="dark:text-gray-100">Notifications</span>
           <input
             type="checkbox"
             checked={settings.notifications_enabled}
@@ -121,7 +131,7 @@ export default function SettingsPage() {
           />
         </div>
         <div className="flex items-center justify-between">
-          <span>Location Tracking</span>
+          <span className="dark:text-gray-100">Location Tracking</span>
           <input
             type="checkbox"
             checked={settings.location_tracking_enabled}
@@ -129,7 +139,7 @@ export default function SettingsPage() {
           />
         </div>
         <div className="flex items-center justify-between">
-          <span>Dark Mode</span>
+          <span className="dark:text-gray-100">Dark Mode</span>
           <input
             type="checkbox"
             checked={settings.dark_mode_enabled}
@@ -137,7 +147,7 @@ export default function SettingsPage() {
           />
         </div>
         <div className="flex items-center justify-between">
-          <span>Emergency Alerts</span>
+          <span className="dark:text-gray-100">Emergency Alerts</span>
           <input
             type="checkbox"
             checked={settings.emergency_alerts_enabled}

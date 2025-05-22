@@ -18,44 +18,57 @@ export default function Header() {
   const router = useRouter();
 
   useEffect(() => {
+    const supabase = getSupabaseClient();
+    let mounted = true;
+
     const fetchUser = async () => {
       setLoading(true);
-      const supabase = getSupabaseClient();
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (user) {
-        // Try to get role from user_metadata or profiles table
-        let role = user.user_metadata?.role;
-        let full_name = user.user_metadata?.full_name;
-        let username = user.user_metadata?.username;
+      const { data: { user: userObj } } = await supabase.auth.getUser();
+      if (userObj) {
+        let role = userObj.user_metadata?.role;
+        let full_name = userObj.user_metadata?.full_name;
+        let username = userObj.user_metadata?.username;
         if (!role || !full_name) {
-          // Try to fetch from profiles table
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("full_name, username, is_admin")
-            .eq("id", user.id)
+          const { data: profileData } = await supabase
+            .from("profile")
+            .select("is_admin")
+            .eq("id", userObj.id)
             .single();
-          if (profile) {
-            full_name = profile.full_name || full_name;
-            username = profile.username || username;
-            role = profile.is_admin ? "admin" : role;
+          if (profileData) {
+            full_name = userObj.user_metadata?.full_name || full_name;
+            username = userObj.user_metadata?.username || username;
+            role = profileData.is_admin ? "admin" : role;
           }
         }
-        setUser({
-          full_name: full_name || username || user.email,
-          username: username,
-          email: user.email,
-          role: role,
-        });
+        if (mounted) {
+          setUser({
+            full_name: full_name || username || userObj.email,
+            username: username,
+            email: userObj.email,
+            role: role,
+          });
+        }
+      } else {
+        if (mounted) setUser(null);
       }
-      setLoading(false);
+      if (mounted) setLoading(false);
     };
+
     fetchUser();
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      fetchUser();
+    });
+    return () => {
+      mounted = false;
+      listener?.subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogout = async () => {
     const supabase = getSupabaseClient();
     await supabase.auth.signOut();
     router.push("/login");
+    window.location.reload();
   };
 
   return (
@@ -68,21 +81,23 @@ export default function Header() {
         {loading ? (
           <span className="text-gray-500">Loading...</span>
         ) : user ? (
-          <div className="flex flex-col items-end">
-            <span className="font-medium text-gray-900 dark:text-gray-100">{user.full_name}</span>
-            {user.role && (
-              <span className="text-xs text-blue-600 dark:text-blue-400">{user.role}</span>
-            )}
-          </div>
+          <>
+            <div className="flex flex-col items-end">
+              <span className="font-medium text-gray-900 dark:text-gray-100">{user.full_name}</span>
+              {user.role && (
+                <span className="text-xs text-blue-600 dark:text-blue-400">{user.role}</span>
+              )}
+            </div>
+            <button
+              onClick={handleLogout}
+              className="ml-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+            >
+              Logout
+            </button>
+          </>
         ) : (
           <span className="text-gray-500">Not logged in</span>
         )}
-        <button
-          onClick={handleLogout}
-          className="ml-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-        >
-          Logout
-        </button>
       </div>
     </header>
   );

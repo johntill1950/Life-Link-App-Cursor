@@ -1,9 +1,10 @@
-'use client'
+"use client"
 
 import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useSupabase } from '../../components/SupabaseProvider'
 import dynamic from 'next/dynamic'
 import 'react-quill/dist/quill.snow.css'
+import { useRouter } from "next/navigation";
 
 const DUMMY_ABOUT = `<h2>About Life-Link.app</h2><p>This is <b>dummy about text</b> for demonstration. You can edit this as an admin.</p>`
 const DUMMY_HELP = `<h2>Help</h2><ul><li>Contact support at support@example.com</li><li>Read the FAQ</li></ul>`
@@ -18,30 +19,39 @@ export default function AboutPage() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const supabase = createClientComponentClient()
+  const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const router = useRouter();
+  const supabase = useSupabase()
 
   useEffect(() => {
+    async function checkUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setAuthLoading(false);
+      if (!user) {
+        router.push("/login");
+      }
+    }
+    checkUser();
+  }, [supabase, router]);
+
+  useEffect(() => {
+    if (!user) return;
     const fetchContent = async () => {
       setIsLoading(true)
       setError(null)
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        console.log('Current user:', user)
-        console.log('User metadata:', user?.user_metadata)
-        console.log('User role:', user?.user_metadata?.role)
-        
-        // Check if user is admin through profiles table
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('id', user?.id)
-          .single()
-        
-        console.log('Profile data:', profileData)
-        console.log('Is admin from profile:', profileData?.is_admin)
-        
+        let profileData = null;
+        if (user?.id) {
+          const { data } = await supabase
+            .from('profile')
+            .select('is_admin')
+            .eq('id', user.id)
+            .single()
+          profileData = data;
+        }
         const isUserAdmin = user?.user_metadata?.role === 'admin' || profileData?.is_admin
-        console.log('Final admin status:', isUserAdmin)
         setIsAdmin(isUserAdmin)
 
         const { data, error } = await supabase
@@ -55,14 +65,13 @@ export default function AboutPage() {
           setHelp(helpSection?.content || DUMMY_HELP)
         }
       } catch (err: any) {
-        console.error('Error in fetchContent:', err)
         setError(err.message || 'Failed to load content')
       } finally {
         setIsLoading(false)
       }
     }
     fetchContent()
-  }, [])
+  }, [user, supabase])
 
   const handleSave = async () => {
     setSaving(true)
@@ -131,6 +140,9 @@ export default function AboutPage() {
     }
   }
 
+  if (authLoading) return <div>Loading...</div>;
+  if (!user) return null;
+
   if (isLoading) {
     return <div className="p-4 text-center">Loading...</div>
   }
@@ -180,6 +192,34 @@ export default function AboutPage() {
           max-height: 40em;
           resize: vertical;
           overflow-y: auto;
+        }
+        /* Dark mode styles for ReactQuill */
+        html.dark .ql-container {
+          background: #18181b;
+          color: #f3f4f6;
+          border-color: #27272a;
+        }
+        html.dark .ql-toolbar {
+          background: #23272f;
+          border-color: #27272a;
+        }
+        html.dark .ql-editor {
+          background: #18181b;
+          color: #f3f4f6;
+        }
+        html.dark .ql-editor p,
+        html.dark .ql-editor span,
+        html.dark .ql-editor h1,
+        html.dark .ql-editor h2,
+        html.dark .ql-editor h3,
+        html.dark .ql-editor h4,
+        html.dark .ql-editor h5,
+        html.dark .ql-editor h6 {
+          color: #f3f4f6;
+        }
+        html.dark .prose {
+          background: #23272f;
+          color: #f3f4f6;
         }
       `}</style>
     </div>
