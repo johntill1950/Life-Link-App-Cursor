@@ -6,7 +6,6 @@ import { getSupabaseClient } from "@/lib/supabase";
 interface UserDetails {
   id: string;
   full_name: string;
-  username: string;
   email: string;
 }
 
@@ -34,7 +33,12 @@ export default function UserPage() {
         .eq("id", user.id)
         .single();
       if (data) {
-        setUserDetails(data);
+        // Map only the required fields to UserDetails, casting to string
+        setUserDetails({
+          id: String(data.id),
+          full_name: String(data.full_name),
+          email: String(data.email)
+        });
         setLoading(false);
       } else {
         // If not found, create a new row
@@ -43,15 +47,18 @@ export default function UserPage() {
           .insert({
             id: user.id,
             full_name: user.user_metadata?.full_name || "",
-            username: user.user_metadata?.username || "",
             email: user.email || ""
           })
           .select()
           .single();
         if (insertError) {
           setError("Failed to create user profile");
-        } else {
-          setUserDetails(newData);
+        } else if (newData) {
+          setUserDetails({
+            id: String(newData.id),
+            full_name: String(newData.full_name),
+            email: String(newData.email)
+          });
         }
         setLoading(false);
       }
@@ -73,7 +80,6 @@ export default function UserPage() {
       .from("user_details")
       .update({
         full_name: userDetails.full_name,
-        username: userDetails.username,
         email: userDetails.email,
         updated_at: new Date().toISOString(),
       })
@@ -96,15 +102,6 @@ export default function UserPage() {
             type="text"
             value={userDetails.full_name}
             onChange={e => handleChange("full_name", e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Username</label>
-          <input
-            type="text"
-            value={userDetails.username}
-            onChange={e => handleChange("username", e.target.value)}
             className="w-full p-2 border rounded"
           />
         </div>

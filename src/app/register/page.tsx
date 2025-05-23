@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { registerUser, checkEmailExists } from '@/lib/userService'
 
 export default function Register() {
   const [email, setEmail] = useState('')
@@ -15,113 +15,40 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
   const [agreed, setAgreed] = useState(false)
   const router = useRouter()
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
 
-    // Check if emails match
     if (email !== confirmEmail) {
       setError('Email addresses do not match.');
       setLoading(false);
       return;
     }
-
-    // Check password strength
     if (password.length < 8 || !/\d/.test(password)) {
       setError('Password must be at least 8 characters and include a number.');
       setLoading(false);
       return;
     }
-
-    // Check if terms are agreed
     if (!agreed) {
       setError('You must agree to the Terms of Service and Privacy Policy.');
       setLoading(false);
       return;
     }
-
-    // Check for existing email
-    const { data: existingEmail } = await supabase
-      .from('profile')
-      .select('id')
-      .eq('email', email)
-      .single();
-
-    if (existingEmail) {
+    const emailExists = await checkEmailExists(email);
+    if (emailExists) {
       setError('Email already in use.');
       setLoading(false);
       return;
     }
-
-    // Log form data
-    console.log('Registration attempt with:', {
-      email,
-      password: '***', // Don't log actual password
-      fullName
-    })
-
     try {
-      // Sign up with Supabase Auth
-      console.log('Attempting Supabase auth signup...')
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-        },
-      })
-
-      console.log('Auth response:', {
-        success: !!authData,
-        error: authError ? authError.message : null,
-        userId: authData?.user?.id
-      })
-
-      if (authError) throw authError
-
-      if (authData.user) {
-        console.log('Auth successful, creating profile...')
-        // Create user profile in 'profile' table
-        const { error: profileError } = await supabase
-          .from('profile')
-          .insert([
-            {
-              id: authData.user.id,
-              email: email,
-              full_name: fullName,
-            },
-          ])
-
-        console.log('Profile creation response:', {
-          success: !profileError,
-          error: profileError ? profileError.message : null
-        })
-
-        if (profileError) throw profileError
-
-        console.log('Registration complete, redirecting to dashboard...')
-        // Redirect to dashboard or confirmation page
-        router.push('/dashboard')
-      }
-    } catch (err) {
-      console.error('Registration error:', err)
-      if (err && typeof err === 'object' && 'message' in err) {
-        setError((err as any).message)
-      } else if (typeof err === 'string') {
-        setError(err)
-      } else {
-        setError('An unknown error occurred during registration')
-      }
+      await registerUser(email, password, fullName);
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'An unknown error occurred during registration');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 

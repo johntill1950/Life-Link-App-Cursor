@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getSupabaseClient } from "@/lib/supabase";
+import { useUser } from "@/lib/useUser";
+import { fetchUserProfile, upsertUserProfile } from "@/lib/userService";
 import { DocumentUploadSection } from "./DocumentUploadSection";
 import { useRouter } from "next/navigation";
 
 const initialProfile = {
   full_name: "",
-  username: "",
   address1: "",
   address2: "",
   address3: "",
@@ -21,48 +21,38 @@ const initialProfile = {
   emergency_contact3_phone: "",
 };
 
+type ProfileType = typeof initialProfile;
+
 export default function ProfilePage() {
-  const [profile, setProfile] = useState({ ...initialProfile });
+  const [profile, setProfile] = useState<ProfileType>({ ...initialProfile });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAlarm, setShowAlarm] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const supabase = getSupabaseClient();
+  const { user, loading: userLoading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    async function getUser() {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      if (!user) {
-        router.push('/login');
-      }
+    if (!user && !userLoading) {
+      router.push('/login');
+      return;
     }
-    getUser();
-  }, []);
-
-  useEffect(() => {
     if (!user) return;
-    const fetchProfile = async () => {
+    const fetchProfileData = async () => {
       setLoading(true);
       setError(null);
-      const { data, error } = await supabase
-        .from("profile")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-      if (data) {
-        const sanitized = Object.fromEntries(
-          Object.entries({ ...initialProfile, ...data }).map(([k, v]) => [k, v ?? ""])
-        );
+      try {
+        const data = await fetchUserProfile(user.id);
+        const sanitized: ProfileType = { ...initialProfile, ...data };
         setProfile(sanitized);
+      } catch (err: any) {
+        setError("Failed to load profile");
       }
       setLoading(false);
     };
-    fetchProfile();
-  }, [user]);
+    fetchProfileData();
+  }, [user, userLoading]);
 
   const handleChange = (field: string, value: string) => {
     setProfile((prev) => ({ ...prev, [field]: value }));
@@ -78,27 +68,12 @@ export default function ProfilePage() {
       setSaving(false);
       return;
     }
-    // Upsert profile (insert or update)
-    const { error } = await supabase
-      .from("profile")
-      .upsert({
-        id: user.id,
-        ...profile,
-        updated_at: new Date().toISOString(),
-      });
-    if (error) {
-      if (
-        error.message &&
-        error.message.toLowerCase().includes("duplicate key value violates unique constraint") &&
-        error.message.toLowerCase().includes("username")
-      ) {
-        setError("Username already taken. Please choose another.");
-      } else {
-        setError("Please check all details and save again");
-      }
-    } else {
+    try {
+      await upsertUserProfile(user.id, profile);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+    } catch (err: any) {
+      setError("Please check all details and save again");
     }
     setSaving(false);
   };
