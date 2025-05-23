@@ -4,10 +4,10 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabase";
+import { signOut } from "@/lib/userService";
 
 interface UserInfo {
   full_name?: string;
-  username?: string;
   email?: string;
   role?: string;
 }
@@ -27,7 +27,6 @@ export default function Header() {
       if (userObj) {
         let role = userObj.user_metadata?.role;
         let full_name = userObj.user_metadata?.full_name;
-        let username = userObj.user_metadata?.username;
         if (!role || !full_name) {
           const { data: profileData } = await supabase
             .from("profile")
@@ -36,14 +35,12 @@ export default function Header() {
             .single();
           if (profileData) {
             full_name = userObj.user_metadata?.full_name || full_name;
-            username = userObj.user_metadata?.username || username;
             role = profileData.is_admin ? "admin" : role;
           }
         }
         if (mounted) {
           setUser({
-            full_name: full_name || username || userObj.email,
-            username: username,
+            full_name: full_name || userObj.email,
             email: userObj.email,
             role: role,
           });
@@ -65,8 +62,7 @@ export default function Header() {
   }, []);
 
   const handleLogout = async () => {
-    const supabase = getSupabaseClient();
-    await supabase.auth.signOut();
+    await signOut();
     router.push("/login");
     window.location.reload();
   };

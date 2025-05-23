@@ -135,24 +135,6 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-
-      {/* Charts */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">24-Hour History</h3>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="time" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="heartRate" stroke="#ef4444" name="Heart Rate" />
-              <Line type="monotone" dataKey="oxygen" stroke="#3b82f6" name="Oxygen" />
-              <Line type="monotone" dataKey="movement" stroke="#10b981" name="Movement" />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
     </div>
   )
 } 

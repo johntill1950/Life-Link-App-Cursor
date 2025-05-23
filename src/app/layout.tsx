@@ -1,16 +1,17 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
-import { Layout } from "../components/layout/Layout";
 import { SupabaseProvider } from "../components/SupabaseProvider";
+import { ReactNode } from "react";
+import { ClientRoot } from "../components/ClientRoot";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className={inter.className}>
         <SupabaseProvider>
-          <Layout>{children}</Layout>
+          <ClientRoot>{children}</ClientRoot>
         </SupabaseProvider>
       </body>
     </html>

@@ -26,7 +26,6 @@ export type HealthData = {
 
 export type UserProfile = {
   id: string
-  username: string
   email: string
   full_name: string
   emergency_contact: string

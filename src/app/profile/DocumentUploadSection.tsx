@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { getSupabaseClient } from "@/lib/supabase";
+import { useEffect, useState, useRef } from "react";
+import { useUser } from "@/lib/useUser";
+import { fetchUserDocuments, uploadUserDocument, deleteUserDocument, getSignedImageUrl, getDownloadUrl } from "@/lib/documentService";
 import { useRouter } from "next/navigation";
 
 export function DocumentUploadSection() {
@@ -9,68 +10,47 @@ export function DocumentUploadSection() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
-  const supabase = getSupabaseClient();
-  const router = useRouter();
   const [imageUrls, setImageUrls] = useState<{ [key: string]: string }>({});
   const [docsLoading, setDocsLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const [downloading, setDownloading] = useState<string | null>(null);
+  const { user, loading: userLoading } = useUser();
 
-  // Fetch user and docs on mount and on auth state change
-  useEffect(() => {
-    let authListener: any;
-    async function init() {
-      setDocsLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      if (user) {
-        await fetchDocsForUser(user);
-        setError(null);
-      } else {
-        setError("Please log in to upload documents");
-      }
-      setDocsLoading(false);
-    }
-    init();
-    authListener = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        await fetchDocsForUser(session.user);
-        setError(null);
-      } else {
-        setUser(null);
-        setUploadedDocs([]);
-        setError("Please log in to upload documents");
-      }
-    });
-    return () => {
-      if (authListener && typeof authListener.subscription?.unsubscribe === 'function') {
-        authListener.subscription.unsubscribe();
-      }
-    };
-  }, []);
-
-  async function fetchDocsForUser(user: any) {
+  const fetchDocsForUser = async () => {
+    if (!user) return;
     setDocsLoading(true);
-    const { data, error } = await supabase
-      .from("user_documents")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("uploaded_at", { ascending: false });
-    if (!error && data) setUploadedDocs(data);
+    try {
+      const docs = await fetchUserDocuments(user.id);
+      setUploadedDocs(docs);
+    } catch (err) {
+      console.error("Error fetching documents:", err);
+      setError("Failed to load documents");
+    }
     setDocsLoading(false);
-  }
+  };
 
-  // Fetch signed URLs for images when uploadedDocs changes
+  useEffect(() => {
+    if (!user && !userLoading) {
+      setError("Please log in to upload documents");
+      return;
+    }
+    if (!user) return;
+    fetchDocsForUser();
+  }, [user, userLoading]);
+
   useEffect(() => {
     async function fetchImageUrls() {
       const urls: { [key: string]: string } = {};
       for (const doc of uploadedDocs) {
         if (doc.file_type.startsWith("image")) {
-          const { data, error } = await supabase.storage
-            .from("user-documents")
-            .createSignedUrl(doc.file_url, 3600);
-          if (data?.signedUrl) {
-            urls[doc.id] = data.signedUrl;
+          try {
+            const signedUrl = await getSignedImageUrl(doc.file_url);
+            if (signedUrl) {
+              urls[doc.id] = signedUrl;
+            }
+          } catch (err) {
+            console.error("Error getting signed URL for", doc.file_name, err);
           }
         }
       }
@@ -79,24 +59,13 @@ export function DocumentUploadSection() {
     if (uploadedDocs.length > 0) fetchImageUrls();
   }, [uploadedDocs]);
 
-  function getFileUrl(fileUrl: string) {
-    // Get a signed URL that expires in 1 hour
-    return supabase.storage
-      .from("user-documents")
-      .createSignedUrl(fileUrl, 3600)
-      .then(({ data }) => data?.signedUrl)
-      .catch(error => {
-        console.error("Error getting signed URL:", error);
-        return null;
-      });
-  }
-
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
-    if (uploading) return; // Prevent double submission
+    if (uploading) return;
     setUploading(true);
     setUploadSuccess(false);
     setError(null);
+
     try {
       if (!user) {
         setError("Please log in to upload documents");
@@ -106,60 +75,25 @@ export function DocumentUploadSection() {
         setError("Please select at least one file to upload");
         return;
       }
+
       for (const file of files) {
-        console.log("Uploading file:", file.name);
-        const filePath = `user-${user.id}/${Date.now()}_${file.name}`;
-        
-        // First check if file already exists
-        const { data: existingFile } = await supabase.storage
-          .from("user-documents")
-          .list(`user-${user.id}`, {
-            search: file.name
-          });
-
-        if (existingFile && existingFile.length > 0) {
-          setError(`File ${file.name} already exists. Please rename it and try again.`);
+        try {
+          await uploadUserDocument(user.id, file);
+        } catch (err: any) {
+          console.error("Error uploading file:", err);
+          setError(err.message || `Error uploading ${file.name}`);
           continue;
-        }
-
-        const { error: uploadError } = await supabase.storage
-          .from("user-documents")
-          .upload(filePath, file, { 
-            cacheControl: "3600", 
-            upsert: false 
-          });
-
-        if (uploadError) {
-          console.error("Error uploading file:", uploadError);
-          setError(`Error uploading ${file.name}: ${uploadError.message}`);
-          continue;
-        }
-
-        console.log("File uploaded successfully, saving metadata");
-        const { error: dbError } = await supabase.from("user_documents").insert({
-          user_id: user.id,
-          file_name: file.name,
-          file_url: filePath,
-          file_type: file.type,
-          uploaded_at: new Date().toISOString(),
-        });
-
-        if (dbError) {
-          console.error("Error saving document metadata:", dbError);
-          setError(`Error saving information for ${file.name}: ${dbError.message}`);
-          // Try to clean up the uploaded file if metadata save fails
-          await supabase.storage.from("user-documents").remove([filePath]);
         }
       }
-      
+
       if (!error) {
         setUploadSuccess(true);
         setTimeout(() => setUploadSuccess(false), 3000);
         setFiles([]);
-        // Reset file input for Chrome
-        const fileInput = document.getElementById('file-upload') as HTMLInputElement | null;
-        if (fileInput) fileInput.value = '';
-        await fetchDocsForUser(user);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        await fetchDocsForUser();
       }
     } catch (error: any) {
       console.error("Upload error:", error);
@@ -176,9 +110,8 @@ export function DocumentUploadSection() {
     }
     setDeleting(docId);
     try {
-      await supabase.storage.from("user-documents").remove([fileUrl]);
-      await supabase.from("user_documents").delete().eq("id", docId);
-      await fetchDocsForUser(user);
+      await deleteUserDocument(docId, fileUrl);
+      await fetchDocsForUser();
     } catch (error) {
       console.error("Delete error:", error);
       setError("Error deleting document. Please try again.");
@@ -192,6 +125,30 @@ export function DocumentUploadSection() {
     console.log("Files selected:", selectedFiles.map(f => f.name));
     setFiles(selectedFiles);
     setError(null);
+  };
+
+  const handleDownload = async (docId: string, fileUrl: string, fileName: string) => {
+    if (!user) {
+      setError("Please log in to download documents");
+      return;
+    }
+    setDownloading(docId);
+    try {
+      const url = await getDownloadUrl(fileUrl, fileName);
+      if (url) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (error) {
+      console.error("Download error:", error);
+      setError("Error downloading document. Please try again.");
+    } finally {
+      setDownloading(null);
+    }
   };
 
   return (
@@ -223,6 +180,7 @@ export function DocumentUploadSection() {
               onChange={handleFileChange}
               className="hidden"
               disabled={!user}
+              ref={fileInputRef}
             />
           </label>
           {files.length > 0 && (
@@ -272,13 +230,22 @@ export function DocumentUploadSection() {
                   {new Date(doc.uploaded_at).toLocaleDateString()}
                 </div>
               </div>
-              <button
-                onClick={() => handleDelete(doc.id, doc.file_url)}
-                disabled={deleting === doc.id || !user}
-                className="ml-4 px-3 py-1 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50 border border-red-600 dark:border-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-              >
-                {deleting === doc.id ? "Deleting..." : "Delete"}
-              </button>
+              <div className="ml-4 flex items-center space-x-2">
+                <button
+                  onClick={() => handleDownload(doc.id, doc.file_url, doc.file_name)}
+                  disabled={downloading === doc.id || !user}
+                  className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 disabled:opacity-50 border border-blue-600 dark:border-blue-400 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                >
+                  {downloading === doc.id ? "Downloading..." : "Download"}
+                </button>
+                <button
+                  onClick={() => handleDelete(doc.id, doc.file_url)}
+                  disabled={deleting === doc.id || !user}
+                  className="px-3 py-1 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50 border border-red-600 dark:border-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  {deleting === doc.id ? "Deleting..." : "Delete"}
+                </button>
+              </div>
             </div>
           ))}
           {uploadedDocs.length === 0 && (

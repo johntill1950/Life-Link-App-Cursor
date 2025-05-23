@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getSupabaseClient } from '@/lib/supabase'
+import { loginUser } from '@/lib/userService'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -18,14 +18,7 @@ export default function LoginPage() {
     setError('')
 
     try {
-      const supabase = getSupabaseClient()
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) throw error
-
+      await loginUser(email, password)
       router.push('/dashboard')
     } catch (error: any) {
       setError(error.message)

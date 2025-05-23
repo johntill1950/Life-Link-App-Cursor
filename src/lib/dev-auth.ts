@@ -35,7 +35,6 @@ export async function ensureDevAuth() {
       password: devPassword,
       options: {
         data: {
-          username: 'devuser',
           full_name: 'Development User',
           role: 'admin'
         }

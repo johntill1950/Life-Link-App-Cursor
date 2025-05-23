@@ -2,14 +2,24 @@
 
 import { useEffect, useState } from 'react'
 import { useSupabase } from '../../components/SupabaseProvider'
+import { SupabaseClient } from '@supabase/supabase-js'
 import dynamic from 'next/dynamic'
 import 'react-quill/dist/quill.snow.css'
 import { useRouter } from "next/navigation";
+import { useUser } from '@/lib/useUser';
 
 const DUMMY_ABOUT = `<h2>About Life-Link.app</h2><p>This is <b>dummy about text</b> for demonstration. You can edit this as an admin.</p>`
 const DUMMY_HELP = `<h2>Help</h2><ul><li>Contact support at support@example.com</li><li>Read the FAQ</li></ul>`
 
 const ReactQuill: any = dynamic(() => import('react-quill'), { ssr: false })
+
+const TEXT_SIZES = [
+  { label: 'Small', prose: 'prose', editor: 'about-text-sm', fontSize: '1rem' },
+  { label: 'Medium', prose: 'prose-lg', editor: 'about-text-md', fontSize: '1.125rem' },
+  { label: 'Large', prose: 'prose-xl', editor: 'about-text-lg', fontSize: '1.25rem' },
+  { label: 'Extra Large', prose: 'prose-2xl', editor: 'about-text-xl', fontSize: '1.5rem' },
+];
+const DEFAULT_TEXT_SIZE = TEXT_SIZES[1].prose; // Medium
 
 export default function AboutPage() {
   const [about, setAbout] = useState('')
@@ -19,30 +29,25 @@ export default function AboutPage() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [user, setUser] = useState<any>(null);
-  const [authLoading, setAuthLoading] = useState(true);
   const router = useRouter();
-  const supabase = useSupabase()
+  const supabase = useSupabase() as SupabaseClient | null;
+  const { user, loading: userLoading } = useUser();
+  const [textSize, setTextSize] = useState(DEFAULT_TEXT_SIZE);
+  const [editorSize, setEditorSize] = useState(TEXT_SIZES[1].editor);
+  const [editorFontSize, setEditorFontSize] = useState(TEXT_SIZES[1].fontSize);
 
   useEffect(() => {
-    async function checkUser() {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      setAuthLoading(false);
-      if (!user) {
-        router.push("/login");
-      }
+    if (!user && !userLoading) {
+      router.push('/login');
+      return;
     }
-    checkUser();
-  }, [supabase, router]);
-
-  useEffect(() => {
     if (!user) return;
-    const fetchContent = async () => {
-      setIsLoading(true)
-      setError(null)
+    setIsLoading(true);
+    setError(null);
+    let profileData = null;
+    (async () => {
       try {
-        let profileData = null;
+        if (!supabase) throw new Error('Supabase client not available');
         if (user?.id) {
           const { data } = await supabase
             .from('profile')
@@ -53,7 +58,6 @@ export default function AboutPage() {
         }
         const isUserAdmin = user?.user_metadata?.role === 'admin' || profileData?.is_admin
         setIsAdmin(isUserAdmin)
-
         const { data, error } = await supabase
           .from('about_content')
           .select('section, content')
@@ -69,80 +73,77 @@ export default function AboutPage() {
       } finally {
         setIsLoading(false)
       }
+    })();
+  }, [user, userLoading, supabase, router]);
+
+  useEffect(() => {
+    const stored = typeof window !== 'undefined' ? localStorage.getItem('aboutTextSize') : null;
+    if (stored && TEXT_SIZES.some(s => s.prose === stored)) {
+      setTextSize(stored);
     }
-    fetchContent()
-  }, [user, supabase])
+  }, []);
+
+  useEffect(() => {
+    const sizeObj = TEXT_SIZES.find(s => s.prose === textSize) || TEXT_SIZES[1];
+    setEditorSize(sizeObj.editor);
+    setEditorFontSize(sizeObj.fontSize);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('aboutTextSize', textSize);
+    }
+  }, [textSize]);
 
   const handleSave = async () => {
     setSaving(true)
     setError(null)
     try {
+      if (!supabase) throw new Error('Supabase client not available');
       // First, get the existing records to get their IDs
       const { data: existingData, error: fetchError } = await supabase
         .from('about_content')
         .select('id, section, content, last_updated')
       const existing: { id?: number; section: string; content: string; last_updated: string }[] = existingData || []
-
       // Find the IDs for about and help sections
       const aboutId = existing.find(row => row.section === 'about')?.id ?? undefined
       const helpId = existing.find(row => row.section === 'help')?.id ?? undefined
-
-      console.log('About ID:', aboutId, 'Help ID:', helpId)
-
       // Prepare the data for upsert
       const aboutData: any = {
         section: 'about',
         content: about,
         last_updated: new Date().toISOString()
       }
-
       const helpData: any = {
         section: 'help',
         content: help,
         last_updated: new Date().toISOString()
       }
-
       // Add IDs if they exist
       if (aboutId) aboutData.id = aboutId
       if (helpId) helpData.id = helpId
-
-      console.log('About data to save:', aboutData)
-      console.log('Help data to save:', helpData)
-
       // Upsert about
       const { error: aboutError } = await supabase
         .from('about_content')
         .upsert(aboutData as any)
-
       if (aboutError) {
-        console.error('Error saving about section:', aboutError)
         throw aboutError
       }
-
       // Upsert help
       const { error: helpError } = await supabase
         .from('about_content')
         .upsert(helpData as any)
-
       if (helpError) {
-        console.error('Error saving help section:', helpError)
         throw helpError
       }
-
       setSaved(true)
-      // Reset saved state after 2 seconds
       setTimeout(() => setSaved(false), 2000)
     } catch (err: any) {
-      console.error('Save error:', err)
       setError(err.message || 'Failed to save content')
     } finally {
       setSaving(false)
     }
   }
 
-  if (authLoading) return <div>Loading...</div>;
+  if (userLoading) return <div>Loading...</div>;
   if (!user) return null;
-
   if (isLoading) {
     return <div className="p-4 text-center">Loading...</div>
   }
@@ -152,20 +153,42 @@ export default function AboutPage() {
 
   return (
     <div className="p-4 max-w-2xl mx-auto space-y-8 pb-24">
+      <div className="mb-4 flex items-center gap-2">
+        <label className="font-medium">Text Size:</label>
+        <select
+          value={textSize}
+          onChange={e => setTextSize(e.target.value)}
+          className="border rounded px-2 py-1"
+        >
+          {TEXT_SIZES.map(size => (
+            <option key={size.prose} value={size.prose}>{size.label}</option>
+          ))}
+        </select>
+      </div>
       <div>
         <label className="block text-sm font-medium mb-1">About</label>
         {isAdmin ? (
-          <ReactQuill value={about} onChange={setAbout} theme="snow" />
+          <div className={editorSize}>
+            <ReactQuill value={about} onChange={setAbout} theme="snow" />
+            <style>{`
+              .${editorSize} .ql-editor { font-size: ${editorFontSize} !important; }
+            `}</style>
+          </div>
         ) : (
-          <div className="prose bg-gray-100 p-2 rounded min-h-[120px]" dangerouslySetInnerHTML={{ __html: about }} />
+          <div className={`${textSize} prose bg-gray-100 p-2 rounded min-h-[120px]`} dangerouslySetInnerHTML={{ __html: about }} />
         )}
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">Help</label>
         {isAdmin ? (
-          <ReactQuill value={help} onChange={setHelp} theme="snow" />
+          <div className={editorSize}>
+            <ReactQuill value={help} onChange={setHelp} theme="snow" />
+            <style>{`
+              .${editorSize} .ql-editor { font-size: ${editorFontSize} !important; }
+            `}</style>
+          </div>
         ) : (
-          <div className="prose bg-gray-100 p-2 rounded min-h-[120px]" dangerouslySetInnerHTML={{ __html: help }} />
+          <div className={`${textSize} prose bg-gray-100 p-2 rounded min-h-[120px]`} dangerouslySetInnerHTML={{ __html: help }} />
         )}
       </div>
       {isAdmin && (

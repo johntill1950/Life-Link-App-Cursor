@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { getSupabaseClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { useUser } from '@/lib/useUser'
 
 interface UserSettings {
   id: string
@@ -16,14 +17,22 @@ interface UserSettings {
 
 export default function SettingsPage() {
   const router = useRouter()
+  const { user, loading: userLoading } = useUser();
   const [settings, setSettings] = useState<UserSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
   useEffect(() => {
+    if (!user && !userLoading) {
+      setError('Not logged in')
+      setLoading(false)
+      router.push('/login')
+      return
+    }
+    if (!user) return
     fetchSettings()
-  }, [])
+  }, [user, userLoading])
 
   useEffect(() => {
     if (settings) {
@@ -39,8 +48,8 @@ export default function SettingsPage() {
     setLoading(true)
     setError('')
     const supabase = getSupabaseClient()
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
+    const userId = user?.id
+    if (!userId) {
       setError('Not logged in')
       setLoading(false)
       router.push('/login')
@@ -49,7 +58,7 @@ export default function SettingsPage() {
     const { data, error } = await supabase
       .from('settings')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single()
     if (error) {
       // If not found, create default settings
@@ -57,7 +66,7 @@ export default function SettingsPage() {
         const { data: newSettings, error: insertError } = await supabase
           .from('settings')
           .insert({
-            user_id: user.id,
+            user_id: userId,
             notifications_enabled: true,
             location_tracking_enabled: true,
             dark_mode_enabled: false,
