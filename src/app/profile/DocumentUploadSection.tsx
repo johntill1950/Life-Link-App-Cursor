@@ -152,8 +152,8 @@ export function DocumentUploadSection() {
   };
 
   return (
-    <div className="mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-      <h3 className="text-lg font-bold mb-4 dark:text-gray-100">Upload Documents</h3>
+    <div className="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg border-t-8 border-blue-400 p-6">
+      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Upload Documents</h2>
       
       {error && (
         <div className="mb-4 p-2 bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-100 rounded text-center">

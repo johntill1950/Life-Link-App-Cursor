@@ -28,8 +28,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-      <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-blue-50 dark:bg-gray-900 p-4">
+      <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border-t-8 border-blue-400">
+        <div className="flex justify-center mb-6">
+          <img src="/Life-Link.jpg" alt="Life-Link Logo" className="h-20 w-auto rounded-lg shadow" />
+        </div>
         <div>
           <h2 className="text-center text-3xl font-bold text-gray-900 dark:text-white">
             Welcome Back

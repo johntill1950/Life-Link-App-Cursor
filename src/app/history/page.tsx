@@ -85,37 +85,37 @@ export default function HistoryPage() {
   if (!user) return null;
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="min-h-screen bg-blue-50 dark:bg-gray-900 p-4 space-y-6">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">History</h1>
 
       {/* Time Range Selector */}
       <div className="flex space-x-4 mb-4">
         <button
           onClick={() => setTimeRange('60m')}
-          className={`px-4 py-2 rounded-lg ${
+          className={`px-4 py-2 rounded-lg transition-colors ${
             timeRange === '60m'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
           }`}
         >
           60 Minutes
         </button>
         <button
           onClick={() => setTimeRange('24h')}
-          className={`px-4 py-2 rounded-lg ${
+          className={`px-4 py-2 rounded-lg transition-colors ${
             timeRange === '24h'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
           }`}
         >
           24 Hours
         </button>
         <button
           onClick={() => setTimeRange('7d')}
-          className={`px-4 py-2 rounded-lg ${
+          className={`px-4 py-2 rounded-lg transition-colors ${
             timeRange === '7d'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
           }`}
         >
           7 Days
@@ -123,17 +123,24 @@ export default function HistoryPage() {
       </div>
 
       {/* Combined Chart */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
           {timeRange === '60m' ? '60-Minute History' : timeRange === '24h' ? '24-Hour History' : '7-Day History'}
         </h3>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey={timeRange === '7d' ? 'date' : 'time'} />
-              <YAxis />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey={timeRange === '7d' ? 'date' : 'time'} stroke="#6b7280" />
+              <YAxis stroke="#6b7280" />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '0.5rem',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                }}
+              />
               {timeRange === '7d' ? (
                 <>
                   <Line type="monotone" dataKey="heartRateMin" stroke="#ef4444" name="Heart Rate Min" />
@@ -159,15 +166,22 @@ export default function HistoryPage() {
       </div>
 
       {/* Heart Rate Only Chart */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow mt-8">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Heart Rate</h3>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey={timeRange === '7d' ? 'date' : 'time'} />
-              <YAxis />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey={timeRange === '7d' ? 'date' : 'time'} stroke="#6b7280" />
+              <YAxis stroke="#6b7280" />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '0.5rem',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                }}
+              />
               {timeRange === '7d' ? (
                 <>
                   <Line type="monotone" dataKey="heartRateMin" stroke="#ef4444" name="Min" />
@@ -183,15 +197,22 @@ export default function HistoryPage() {
       </div>
 
       {/* Oxygen Only Chart */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow mt-8">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Oxygen</h3>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey={timeRange === '7d' ? 'date' : 'time'} />
-              <YAxis />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey={timeRange === '7d' ? 'date' : 'time'} stroke="#6b7280" />
+              <YAxis stroke="#6b7280" />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '0.5rem',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                }}
+              />
               {timeRange === '7d' ? (
                 <>
                   <Line type="monotone" dataKey="oxygenMin" stroke="#3b82f6" name="Min" />
@@ -207,15 +228,22 @@ export default function HistoryPage() {
       </div>
 
       {/* Movement Only Chart */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow mt-8">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Movement</h3>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey={timeRange === '7d' ? 'date' : 'time'} />
-              <YAxis />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey={timeRange === '7d' ? 'date' : 'time'} stroke="#6b7280" />
+              <YAxis stroke="#6b7280" />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '0.5rem',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                }}
+              />
               {timeRange === '7d' ? (
                 <>
                   <Line type="monotone" dataKey="movementMin" stroke="#10b981" name="Min" />
