@@ -98,42 +98,46 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="min-h-screen bg-blue-50 dark:bg-gray-900 p-4 space-y-6">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
 
-      {/* Current Metrics */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Heart Rate</h3>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{currentMetrics.heartRate} BPM</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Oxygen</h3>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{currentMetrics.oxygen}%</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Movement</h3>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{currentMetrics.movement}%</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Location</h3>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{currentMetrics.location}</p>
-          {currentMetrics.coordinates.lat !== 0 && (
-            <>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                {currentMetrics.coordinates.lat.toFixed(6)}, {currentMetrics.coordinates.lng.toFixed(6)}
-              </p>
-              <a
-                href={getGoogleMapsUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-              >
-                Show in Map
-              </a>
-            </>
-          )}
-        </div>
+      {/* Location */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400">
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Location</h3>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white">{currentMetrics.location}</p>
+        {currentMetrics.coordinates.lat !== 0 && (
+          <>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+              {currentMetrics.coordinates.lat.toFixed(6)}, {currentMetrics.coordinates.lng.toFixed(6)}
+            </p>
+            <a
+              href={getGoogleMapsUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              Show in Map
+            </a>
+          </>
+        )}
+      </div>
+
+      {/* Heart Rate */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400">
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Heart Rate</h3>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white">{currentMetrics.heartRate} BPM</p>
+      </div>
+
+      {/* Oxygen */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400">
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Oxygen</h3>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white">{currentMetrics.oxygen}%</p>
+      </div>
+
+      {/* Movement */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400">
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Movement</h3>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white">{currentMetrics.movement}%</p>
       </div>
     </div>
   )

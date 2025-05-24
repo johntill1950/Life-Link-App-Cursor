@@ -152,99 +152,118 @@ export default function AboutPage() {
   }
 
   return (
-    <div className="p-4 max-w-2xl mx-auto space-y-8 pb-24">
-      <div className="mb-4 flex items-center gap-2">
-        <label className="font-medium">Text Size:</label>
-        <select
-          value={textSize}
-          onChange={e => setTextSize(e.target.value)}
-          className="border rounded px-2 py-1"
-        >
-          {TEXT_SIZES.map(size => (
-            <option key={size.prose} value={size.prose}>{size.label}</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="block text-sm font-medium mb-1">About</label>
-        {isAdmin ? (
-          <div className={editorSize}>
-            <ReactQuill value={about} onChange={setAbout} theme="snow" />
-            <style>{`
-              .${editorSize} .ql-editor { font-size: ${editorFontSize} !important; }
-            `}</style>
+    <div className="min-h-screen bg-blue-50 dark:bg-gray-900 p-4">
+      <div className="max-w-2xl mx-auto space-y-8 pb-24">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400">
+          <div className="mb-6 flex items-center gap-2">
+            <label className="font-medium text-gray-900 dark:text-white">Text Size:</label>
+            <select
+              value={textSize}
+              onChange={e => setTextSize(e.target.value)}
+              className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              {TEXT_SIZES.map(size => (
+                <option key={size.prose} value={size.prose}>{size.label}</option>
+              ))}
+            </select>
           </div>
-        ) : (
-          <div className={`${textSize} prose bg-gray-100 p-2 rounded min-h-[120px]`} dangerouslySetInnerHTML={{ __html: about }} />
-        )}
-      </div>
-      <div>
-        <label className="block text-sm font-medium mb-1">Help</label>
-        {isAdmin ? (
-          <div className={editorSize}>
-            <ReactQuill value={help} onChange={setHelp} theme="snow" />
-            <style>{`
-              .${editorSize} .ql-editor { font-size: ${editorFontSize} !important; }
-            `}</style>
+
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">About</label>
+              {isAdmin ? (
+                <div className={editorSize}>
+                  <ReactQuill value={about} onChange={setAbout} theme="snow" />
+                  <style>{`
+                    .${editorSize} .ql-editor { font-size: ${editorFontSize} !important; }
+                  `}</style>
+                </div>
+              ) : (
+                <div className={`${textSize} prose dark:prose-invert bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg min-h-[120px]`} dangerouslySetInnerHTML={{ __html: about }} />
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">Help</label>
+              {isAdmin ? (
+                <div className={editorSize}>
+                  <ReactQuill value={help} onChange={setHelp} theme="snow" />
+                  <style>{`
+                    .${editorSize} .ql-editor { font-size: ${editorFontSize} !important; }
+                  `}</style>
+                </div>
+              ) : (
+                <div className={`${textSize} prose dark:prose-invert bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg min-h-[120px]`} dangerouslySetInnerHTML={{ __html: help }} />
+              )}
+            </div>
           </div>
-        ) : (
-          <div className={`${textSize} prose bg-gray-100 p-2 rounded min-h-[120px]`} dangerouslySetInnerHTML={{ __html: help }} />
-        )}
-      </div>
-      {isAdmin && (
-        <>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
-          >
-            {saving ? 'Saving...' : 'Save Changes'}
-          </button>
-          {(!saving && !error && saved) && (
-            <div className="text-green-600 text-center mt-2">Content saved!</div>
+
+          {isAdmin && (
+            <div className="mt-6">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+              {(!saving && !error && saved) && (
+                <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/50 text-green-600 dark:text-green-400 rounded-lg text-center">
+                  Content saved!
+                </div>
+              )}
+            </div>
           )}
-        </>
-      )}
-      <style jsx global>{`
-        .ql-container, .ql-editor, .ql-toolbar {
-          z-index: 1 !important;
-        }
-        .ql-container {
-          min-height: 12em;
-          height: 12em;
-          max-height: 40em;
-          resize: vertical;
-          overflow-y: auto;
-        }
-        /* Dark mode styles for ReactQuill */
-        html.dark .ql-container {
-          background: #18181b;
-          color: #f3f4f6;
-          border-color: #27272a;
-        }
-        html.dark .ql-toolbar {
-          background: #23272f;
-          border-color: #27272a;
-        }
-        html.dark .ql-editor {
-          background: #18181b;
-          color: #f3f4f6;
-        }
-        html.dark .ql-editor p,
-        html.dark .ql-editor span,
-        html.dark .ql-editor h1,
-        html.dark .ql-editor h2,
-        html.dark .ql-editor h3,
-        html.dark .ql-editor h4,
-        html.dark .ql-editor h5,
-        html.dark .ql-editor h6 {
-          color: #f3f4f6;
-        }
-        html.dark .prose {
-          background: #23272f;
-          color: #f3f4f6;
-        }
-      `}</style>
+        </div>
+
+        <style jsx global>{`
+          .ql-container, .ql-editor, .ql-toolbar {
+            z-index: 1 !important;
+          }
+          .ql-container {
+            min-height: 12em;
+            height: 12em;
+            max-height: 40em;
+            resize: vertical;
+            overflow-y: auto;
+            border-radius: 0.5rem;
+          }
+          /* Dark mode styles for ReactQuill */
+          html.dark .ql-container {
+            background: #18181b;
+            color: #f3f4f6;
+            border-color: #27272a;
+          }
+          html.dark .ql-toolbar {
+            background: #23272f;
+            border-color: #27272a;
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+          }
+          html.dark .ql-editor {
+            background: #18181b;
+            color: #f3f4f6;
+          }
+          html.dark .ql-editor p,
+          html.dark .ql-editor span,
+          html.dark .ql-editor h1,
+          html.dark .ql-editor h2,
+          html.dark .ql-editor h3,
+          html.dark .ql-editor h4,
+          html.dark .ql-editor h5,
+          html.dark .ql-editor h6 {
+            color: #f3f4f6;
+          }
+          html.dark .prose {
+            background: #23272f;
+            color: #f3f4f6;
+          }
+          .ql-toolbar {
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+          }
+        `}</style>
+      </div>
     </div>
   )
 }

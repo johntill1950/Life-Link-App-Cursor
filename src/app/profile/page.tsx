@@ -86,113 +86,116 @@ export default function ProfilePage() {
   if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Profile</h1>
-      <div className="max-w-2xl mx-auto p-4 space-y-8">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h2 className="text-2xl font-bold mb-6 dark:text-gray-100">Profile Information</h2>
+    <div className="min-h-screen bg-blue-50 dark:bg-gray-900 container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Profile</h1>
+      <div className="max-w-2xl mx-auto space-y-8">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border-t-8 border-blue-400 p-6">
           <form onSubmit={handleSave} className="space-y-4">
             {/* Personal Info Group */}
-            <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 mb-4">
+            <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-6 bg-gray-200 dark:bg-gray-700/50">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Personal Information</h3>
               <input
                 type="text"
                 placeholder="Full Name"
                 value={profile.full_name}
                 onChange={e => handleChange("full_name", e.target.value)}
-                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400 mb-2"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <input
                 type="text"
                 placeholder="Address 1"
                 value={profile.address1}
                 onChange={e => handleChange("address1", e.target.value)}
-                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400 mb-2"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <input
                 type="text"
                 placeholder="Address 2"
                 value={profile.address2}
                 onChange={e => handleChange("address2", e.target.value)}
-                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400 mb-2"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <input
                 type="text"
                 placeholder="Address 3"
                 value={profile.address3}
                 onChange={e => handleChange("address3", e.target.value)}
-                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400 mb-2"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <input
                 type="text"
                 placeholder="Country"
                 value={profile.country}
                 onChange={e => handleChange("country", e.target.value)}
-                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400 mb-2"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <input
                 type="text"
                 placeholder="Postal Code"
                 value={profile.postal_code}
                 onChange={e => handleChange("postal_code", e.target.value)}
-                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             {/* Emergency Contact 1 Group */}
-            <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 mb-4">
+            <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-6 bg-gray-200 dark:bg-gray-700/50">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Emergency Contact 1</h3>
               <input
                 type="text"
-                placeholder="Emergency Contact 1 Name"
+                placeholder="Full Name"
                 value={profile.emergency_contact1_name}
                 onChange={e => handleChange("emergency_contact1_name", e.target.value)}
-                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400 mb-2"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <input
                 type="tel"
-                placeholder="Emergency Contact 1 Mobile # (e.g. +61 412345678)"
+                placeholder="Mobile # (e.g. +61 123 456 789)"
                 value={profile.emergency_contact1_phone}
                 onChange={e => handleChange("emergency_contact1_phone", e.target.value)}
-                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 pattern="^\\+\\d{1,3} ?\\d{4,14}$"
                 inputMode="tel"
               />
             </div>
 
             {/* Emergency Contact 2 Group */}
-            <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 mb-4">
+            <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-6 bg-gray-200 dark:bg-gray-700/50">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Emergency Contact 2</h3>
               <input
                 type="text"
-                placeholder="Emergency Contact 2 Name"
+                placeholder="Full Name"
                 value={profile.emergency_contact2_name}
                 onChange={e => handleChange("emergency_contact2_name", e.target.value)}
-                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400 mb-2"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <input
                 type="tel"
-                placeholder="Emergency Contact 2 Mobile # (e.g. +61 412345678)"
+                placeholder="Mobile # (e.g. +61 123 456 789)"
                 value={profile.emergency_contact2_phone}
                 onChange={e => handleChange("emergency_contact2_phone", e.target.value)}
-                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 pattern="^\\+\\d{1,3} ?\\d{4,14}$"
                 inputMode="tel"
               />
             </div>
 
             {/* Emergency Contact 3 Group */}
-            <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 mb-4">
+            <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-6 bg-gray-200 dark:bg-gray-700/50">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Emergency Contact 3</h3>
               <input
                 type="text"
-                placeholder="Emergency Contact 3 Name"
+                placeholder="Full Name"
                 value={profile.emergency_contact3_name}
                 onChange={e => handleChange("emergency_contact3_name", e.target.value)}
-                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400 mb-2"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <input
                 type="tel"
-                placeholder="Emergency Contact 3 Mobile # (e.g. +61 412345678)"
+                placeholder="Mobile # (e.g. +61 123 456 789)"
                 value={profile.emergency_contact3_phone}
                 onChange={e => handleChange("emergency_contact3_phone", e.target.value)}
-                className="w-full p-2 border rounded dark:text-gray-100 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-400"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 pattern="^\\+\\d{1,3} ?\\d{4,14}$"
                 inputMode="tel"
               />
@@ -201,12 +204,12 @@ export default function ProfilePage() {
             <button
               type="submit"
               disabled={saving}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               {saving ? "Saving..." : "Save Profile"}
             </button>
             {saved && (
-              <div className="text-green-600 text-center mt-2">Profile saved!</div>
+              <div className="text-green-600 dark:text-green-400 text-center mt-2">Profile saved!</div>
             )}
           </form>
         </div>
@@ -214,7 +217,7 @@ export default function ProfilePage() {
         <div className="text-center">
           <button
             onClick={() => setShowAlarm(true)}
-            className="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 transition-colors"
+            className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           >
             Test Alarm
           </button>
@@ -222,14 +225,14 @@ export default function ProfilePage() {
 
         {showAlarm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg text-center border-t-8 border-red-400">
               <h3 className="text-xl font-bold text-red-600 mb-4">ALARM TEST ONLY</h3>
-              <p className="mb-2 dark:text-gray-100">Heart Rate: &lt;30</p>
-              <p className="mb-2 dark:text-gray-100">SPO2: &lt;80%</p>
-              <p className="mb-4 dark:text-gray-100">Movement: 0</p>
+              <p className="mb-2 text-gray-900 dark:text-gray-100">Heart Rate: &lt;30</p>
+              <p className="mb-2 text-gray-900 dark:text-gray-100">SPO2: &lt;80%</p>
+              <p className="mb-4 text-gray-900 dark:text-gray-100">Movement: 0</p>
               <button
                 onClick={() => setShowAlarm(false)}
-                className="w-full bg-gray-600 text-white py-2 px-4 rounded hover:bg-gray-700 transition-colors"
+                className="w-full bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
               >
                 Close
               </button>
