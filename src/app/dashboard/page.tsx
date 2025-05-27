@@ -35,6 +35,8 @@ export default function DashboardPage() {
     location: 'Loading location...',
     coordinates: { lat: 0, lng: 0 }
   })
+  const [settings, setSettings] = useState<{ location_tracking_enabled: boolean }>({ location_tracking_enabled: true });
+  const [lastLocationUpdate, setLastLocationUpdate] = useState<number>(0);
 
   useEffect(() => {
     async function checkUser() {
@@ -44,12 +46,25 @@ export default function DashboardPage() {
       setAuthLoading(false);
       if (!user) {
         router.push("/login");
+      } else {
+        // Fetch user settings
+        const { data: settingsData, error: settingsError } = await supabase
+          .from('settings')
+          .select('location_tracking_enabled')
+          .eq('id', user.id)
+          .single();
+        if (settingsError) {
+          console.error('Error fetching settings:', settingsError);
+        } else if (settingsData) {
+          setSettings(settingsData);
+        }
       }
     }
     checkUser();
 
-    // Get actual location
-    if (navigator.geolocation) {
+    // Get actual location only if location tracking is enabled and 5 minutes have passed
+    const now = Date.now();
+    if (navigator.geolocation && settings.location_tracking_enabled && now - lastLocationUpdate >= 300000) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
@@ -64,6 +79,7 @@ export default function DashboardPage() {
               location,
               coordinates: { lat: latitude, lng: longitude }
             }))
+            setLastLocationUpdate(now);
           } catch (error) {
             console.error('Error fetching location:', error)
             setCurrentMetrics(prev => ({ ...prev, location: 'Location unavailable' }))
@@ -74,6 +90,8 @@ export default function DashboardPage() {
           setCurrentMetrics(prev => ({ ...prev, location: 'Location unavailable' }))
         }
       )
+    } else if (!settings.location_tracking_enabled) {
+      setCurrentMetrics(prev => ({ ...prev, location: 'Location tracking disabled' }));
     }
 
     const interval = setInterval(() => {
@@ -87,7 +105,7 @@ export default function DashboardPage() {
     }, 5000)
 
     return () => clearInterval(interval)
-  }, []);
+  }, [settings.location_tracking_enabled, lastLocationUpdate]);
 
   if (authLoading) return <div>Loading...</div>;
   if (!user) return null;
@@ -120,24 +138,40 @@ export default function DashboardPage() {
             </a>
           </>
         )}
+        {/* Show the button only if location is not being tracked */}
+        {(
+          currentMetrics.coordinates.lat === 0 ||
+          currentMetrics.location === 'Location unavailable' ||
+          currentMetrics.location === 'Loading location...'
+        ) && (
+          <button
+            onClick={() => setLastLocationUpdate(0)}
+            className="mt-2 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 float-right"
+          >
+            Restart Location Tracking
+          </button>
+        )}
       </div>
 
-      {/* Heart Rate */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400">
-        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Heart Rate</h3>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white">{currentMetrics.heartRate} BPM</p>
-      </div>
+      {/* Metrics Section */}
+      <div className="flex space-x-4">
+        {/* Heart Rate */}
+        <div className="flex-1 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400">
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Heart Rate</h3>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{currentMetrics.heartRate} BPM</p>
+        </div>
 
-      {/* Oxygen */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400">
-        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Oxygen</h3>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white">{currentMetrics.oxygen}%</p>
-      </div>
+        {/* Oxygen */}
+        <div className="flex-1 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400">
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Oxygen</h3>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{currentMetrics.oxygen}%</p>
+        </div>
 
-      {/* Movement */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400">
-        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Movement</h3>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white">{currentMetrics.movement}%</p>
+        {/* Movement */}
+        <div className="flex-1 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400">
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Movement</h3>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{currentMetrics.movement}%</p>
+        </div>
       </div>
     </div>
   )

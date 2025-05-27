@@ -1,17 +1,9 @@
-CREATE TABLE IF NOT EXISTS public.settings (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID UNIQUE,
-  notifications_enabled BOOLEAN DEFAULT true,
-  location_tracking_enabled BOOLEAN DEFAULT true,
-  dark_mode_enabled BOOLEAN DEFAULT false,
-  emergency_alerts_enabled BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+-- Drop existing policies
+DROP POLICY IF EXISTS "Users can view their own settings" ON public.settings;
+DROP POLICY IF EXISTS "Users can update their own settings" ON public.settings;
+DROP POLICY IF EXISTS "Users can insert their own settings" ON public.settings;
 
--- Enable RLS
-ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
-
--- Create policies
+-- Create new policies
 CREATE POLICY "Users can view their own settings"
 ON public.settings FOR SELECT
 TO authenticated

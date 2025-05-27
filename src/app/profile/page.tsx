@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@/lib/useUser";
 import { fetchUserProfile, upsertUserProfile } from "@/lib/userService";
-import { DocumentUploadSection } from "./DocumentUploadSection";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 const initialProfile = {
   full_name: "",
@@ -19,6 +19,9 @@ const initialProfile = {
   emergency_contact2_phone: "",
   emergency_contact3_name: "",
   emergency_contact3_phone: "",
+  medical_history: "",
+  medications: "",
+  special_notes: "",
 };
 
 type ProfileType = typeof initialProfile;
@@ -34,25 +37,52 @@ export default function ProfilePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!user && !userLoading) {
-      router.push('/login');
-      return;
-    }
-    if (!user) return;
+    let mounted = true;
+    let retryCount = 0;
+    const maxRetries = 3;
+
     const fetchProfileData = async () => {
+      if (!user) return;
       setLoading(true);
       setError(null);
       try {
         const data = await fetchUserProfile(user.id);
-        const sanitized: ProfileType = { ...initialProfile, ...data };
-        setProfile(sanitized);
+        if (mounted) {
+          const sanitized: ProfileType = { ...initialProfile, ...data };
+          setProfile(sanitized);
+        }
       } catch (err: any) {
-        setError("Failed to load profile");
+        if (mounted) {
+          setError("Failed to load profile");
+        }
       }
-      setLoading(false);
+      if (mounted) {
+        setLoading(false);
+      }
     };
-    fetchProfileData();
-  }, [user, userLoading]);
+
+    const attemptFetch = async () => {
+      if (!user && !userLoading) {
+        if (retryCount < maxRetries) {
+          retryCount++;
+          // Wait a bit before retrying
+          setTimeout(attemptFetch, 1000);
+          return;
+        }
+        router.push('/login');
+        return;
+      }
+      if (user) {
+        await fetchProfileData();
+      }
+    };
+
+    attemptFetch();
+
+    return () => {
+      mounted = false;
+    };
+  }, [user, userLoading, router]);
 
   const handleChange = (field: string, value: string) => {
     setProfile((prev) => ({ ...prev, [field]: value }));
@@ -67,6 +97,16 @@ export default function ProfilePage() {
       setError("Not logged in");
       setSaving(false);
       return;
+    }
+    // Validate phone numbers
+    const phoneFields = ['emergency_contact1_phone', 'emergency_contact2_phone', 'emergency_contact3_phone'];
+    for (const field of phoneFields) {
+      const phone = profile[field];
+      if (phone && !/^\d{10}$/.test(phone)) {
+        setError(`Please ensure ${field.replace('_', ' ')} is 10 digits.`);
+        setSaving(false);
+        return;
+      }
     }
     try {
       await upsertUserProfile(user.id, profile);
@@ -150,11 +190,11 @@ export default function ProfilePage() {
               />
               <input
                 type="tel"
-                placeholder="Mobile # (e.g. +61 123 456 789)"
+                placeholder="Mobile # (eg: 0412345678)"
                 value={profile.emergency_contact1_phone}
                 onChange={e => handleChange("emergency_contact1_phone", e.target.value)}
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                pattern="^\\+\\d{1,3} ?\\d{4,14}$"
+                pattern="^\\d{10}$"
                 inputMode="tel"
               />
             </div>
@@ -171,11 +211,11 @@ export default function ProfilePage() {
               />
               <input
                 type="tel"
-                placeholder="Mobile # (e.g. +61 123 456 789)"
+                placeholder="Mobile # (eg: 0412345678)"
                 value={profile.emergency_contact2_phone}
                 onChange={e => handleChange("emergency_contact2_phone", e.target.value)}
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                pattern="^\\+\\d{1,3} ?\\d{4,14}$"
+                pattern="^\\d{10}$"
                 inputMode="tel"
               />
             </div>
@@ -192,13 +232,53 @@ export default function ProfilePage() {
               />
               <input
                 type="tel"
-                placeholder="Mobile # (e.g. +61 123 456 789)"
+                placeholder="Mobile # (eg: 0412345678)"
                 value={profile.emergency_contact3_phone}
                 onChange={e => handleChange("emergency_contact3_phone", e.target.value)}
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                pattern="^\\+\\d{1,3} ?\\d{4,14}$"
+                pattern="^\\d{10}$"
                 inputMode="tel"
               />
+            </div>
+
+            <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-6 bg-gray-200 dark:bg-gray-700/50">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Relevant Medical History</h3>
+              <textarea
+                placeholder="Please be brief...."
+                value={profile.medical_history || ''}
+                onChange={e => handleChange("medical_history", e.target.value)}
+                rows={Math.min(12, (profile.medical_history?.split('\n').length || 1))}
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
+                maxLength={500}
+                style={{ minHeight: '3em', maxHeight: '12em' }}
+              />
+              <p className="text-sm text-gray-500 dark:text-gray-400">Characters remaining: {500 - (profile.medical_history?.length || 0)}</p>
+            </div>
+            <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-6 bg-gray-200 dark:bg-gray-700/50">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Current Medications</h3>
+              <textarea
+                placeholder="Please be brief...."
+                value={profile.medications || ''}
+                onChange={e => handleChange("medications", e.target.value)}
+                rows={Math.min(12, (profile.medications?.split('\n').length || 1))}
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
+                maxLength={500}
+                style={{ minHeight: '3em', maxHeight: '12em' }}
+              />
+              <p className="text-sm text-gray-500 dark:text-gray-400">Characters remaining: {500 - (profile.medications?.length || 0)}</p>
+            </div>
+            <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-6 bg-gray-200 dark:bg-gray-700/50">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Special Notes</h3>
+              <textarea
+                placeholder="Please be brief...."
+                value={profile.special_notes || ''}
+                onChange={e => handleChange("special_notes", e.target.value)}
+                rows={Math.min(12, (profile.special_notes?.split('\n').length || 1))}
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
+                maxLength={500}
+                style={{ minHeight: '3em', maxHeight: '12em' }}
+              />
+              <p className="text-sm text-gray-500 dark:text-gray-400">Characters remaining: {500 - (profile.special_notes?.length || 0)}</p>
             </div>
 
             <button
@@ -239,8 +319,6 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
-
-        <DocumentUploadSection />
       </div>
     </div>
   );

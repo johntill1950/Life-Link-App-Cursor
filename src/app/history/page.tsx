@@ -64,7 +64,7 @@ export default function HistoryPage() {
   const { user, loading: userLoading } = useUser();
   const router = useRouter();
 
-  const [timeRange, setTimeRange] = useState<'60m' | '24h' | '7d'>('7d');
+  const [timeRange, setTimeRange] = useState<'60m' | '24h' | '7d'>('60m');
   const [sevenDayData] = useState(generateSevenDayData());
   const [twentyFourHourData] = useState(generateTwentyFourHourData());
   const [sixtyMinuteData] = useState(generateSixtyMinuteData());

@@ -27,7 +27,10 @@ export async function upsertUserProfile(userId: string, profile: any) {
       ...profile,
       updated_at: new Date().toISOString(),
     });
-  if (error) throw error;
+  if (error) {
+    console.error('Error upserting user profile:', error);
+    throw error;
+  }
   return true;
 }
 
@@ -64,4 +67,44 @@ export async function checkEmailExists(email: string) {
     .eq('email', email)
     .single();
   return !!data;
+}
+
+export async function fetchUserSettings(userId: string) {
+  const supabase = getSupabaseClient();
+  const defaults = {
+    notifications_enabled: true,
+    location_tracking_enabled: true,
+    dark_mode_enabled: false,
+    emergency_alerts_enabled: true,
+  };
+  try {
+    const { data, error } = await supabase
+      .from('settings')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if (error && error.code === 'PGRST116') {
+      // No settings row exists, create one
+      await supabase.from('settings').insert({ id: userId, ...defaults });
+      // Optionally, fetch again
+    } else if (error) {
+      throw error;
+    }
+    return data;
+  } catch (err) {
+    // handle error
+  }
+}
+
+export async function upsertUserSettings(userId: string, settings: any) {
+  const supabase = getSupabaseClient();
+  const { error } = await supabase
+    .from('settings')
+    .upsert({
+      id: userId,
+      ...settings,
+      updated_at: new Date().toISOString(),
+    });
+  if (error) throw error;
+  return true;
 } 
