@@ -1,27 +1,38 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { loginUser } from '@/lib/userService'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const msg = searchParams.get('message')
+    if (msg) {
+      setMessage(msg)
+    }
+  }, [searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setMessage('')
 
     try {
       await loginUser(email, password)
       router.push('/dashboard')
     } catch (error: any) {
-      setError(error.message)
+      console.error('Login error:', error)
+      setError(error.message || 'Invalid login credentials')
     } finally {
       setLoading(false)
     }
@@ -43,6 +54,12 @@ export default function LoginPage() {
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+          {message && (
+            <div className="bg-green-50 dark:bg-green-900/50 text-green-600 dark:text-green-400 p-3 rounded-lg text-sm">
+              {message}
+            </div>
+          )}
+          
           {error && (
             <div className="bg-red-50 dark:bg-red-900/50 text-red-500 dark:text-red-400 p-3 rounded-lg text-sm">
               {error}

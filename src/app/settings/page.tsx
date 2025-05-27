@@ -1,38 +1,75 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getSupabaseClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/lib/useUser'
+import { fetchUserSettings, upsertUserSettings } from '@/lib/userService'
 
-interface UserSettings {
-  id: string
-  user_id: string
-  notifications_enabled: boolean
-  location_tracking_enabled: boolean
-  dark_mode_enabled: boolean
-  emergency_alerts_enabled: boolean
-  created_at: string
+const initialSettings = {
+  notifications_enabled: true,
+  location_tracking_enabled: true,
+  dark_mode_enabled: false,
+  emergency_alerts_enabled: true,
 }
 
+type SettingsType = typeof initialSettings
+
 export default function SettingsPage() {
-  const router = useRouter()
-  const { user, loading: userLoading } = useUser();
-  const [settings, setSettings] = useState<UserSettings | null>(null)
+  const [settings, setSettings] = useState<SettingsType>({ ...initialSettings })
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const { user, loading: userLoading } = useUser()
+  const router = useRouter()
 
   useEffect(() => {
-    if (!user && !userLoading) {
-      setError('Not logged in')
-      setLoading(false)
-      router.push('/login')
-      return
+    let mounted = true
+    let retryCount = 0
+    const maxRetries = 3
+
+    const fetchSettingsData = async () => {
+      if (!user) return
+      setLoading(true)
+      setError(null)
+      try {
+        const data = await fetchUserSettings(user.id)
+        if (mounted) {
+          const sanitized: SettingsType = { ...initialSettings, ...data }
+          setSettings(sanitized)
+        }
+      } catch (err: any) {
+        if (mounted) {
+          setError("Failed to load settings")
+        }
+      }
+      if (mounted) {
+        setLoading(false)
+      }
     }
-    if (!user) return
-    fetchSettings()
-  }, [user, userLoading])
+
+    const attemptFetch = async () => {
+      if (!user && !userLoading) {
+        if (retryCount < maxRetries) {
+          retryCount++
+          // Wait a bit before retrying
+          setTimeout(attemptFetch, 1000)
+          return
+        }
+        router.push('/login')
+        return
+      }
+      if (user) {
+        await fetchSettingsData()
+      }
+    }
+
+    attemptFetch()
+
+    return () => {
+      mounted = false
+    }
+  }, [user, userLoading, router])
 
   useEffect(() => {
     if (settings) {
@@ -44,94 +81,42 @@ export default function SettingsPage() {
     }
   }, [settings?.dark_mode_enabled])
 
-  async function fetchSettings() {
-    setLoading(true)
-    setError('')
-    const supabase = getSupabaseClient()
-    const userId = user?.id
-    if (!userId) {
-      setError('Not logged in')
-      setLoading(false)
-      router.push('/login')
+  function handleToggle(key: keyof SettingsType) {
+    setSettings((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+    setError(null)
+    setSaved(false)
+    if (!user) {
+      setError("Not logged in")
+      setSaving(false)
       return
     }
-    const { data, error } = await supabase
-      .from('settings')
-      .select('*')
-      .eq('user_id', userId)
-      .single()
-    if (error) {
-      // If not found, create default settings
-      if (error.code === 'PGRST116' || error.message.includes('No rows')) {
-        const { data: newSettings, error: insertError } = await supabase
-          .from('settings')
-          .insert({
-            user_id: userId,
-            notifications_enabled: true,
-            location_tracking_enabled: true,
-            dark_mode_enabled: false,
-            emergency_alerts_enabled: true,
-          })
-          .select()
-          .single()
-        if (insertError || !newSettings || !newSettings.id) {
-          setError('Failed to create settings.')
-          setSettings(null)
-        } else {
-          setSettings(newSettings as unknown as UserSettings)
-        }
-      } else {
-        setError('Failed to load settings.')
-        setSettings(null)
-      }
-    } else {
-      if (!data || !data.id) {
-        setError('Settings not found.')
-        setSettings(null)
-      } else {
-        setSettings(data as unknown as UserSettings)
-      }
+    try {
+      await upsertUserSettings(user.id, settings)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err: any) {
+      setError("Please check all details and save again")
     }
-    setLoading(false)
+    setSaving(false)
   }
 
-  function handleToggle(key: keyof Omit<UserSettings, 'id' | 'user_id' | 'created_at'>) {
-    if (!settings) return
-    setSettings({ ...settings, [key]: !settings[key] })
+  if (!user) {
+    return <div>Loading...</div>
   }
 
-  async function handleSave() {
-    setError('')
-    setSuccess('')
-    if (!settings) return
-    setLoading(true)
-    const supabase = getSupabaseClient()
-    const { error } = await supabase
-      .from('settings')
-      .update({
-        notifications_enabled: settings.notifications_enabled,
-        location_tracking_enabled: settings.location_tracking_enabled,
-        dark_mode_enabled: settings.dark_mode_enabled,
-        emergency_alerts_enabled: settings.emergency_alerts_enabled,
-      })
-      .eq('id', settings.id)
-    if (error) {
-      setError('Failed to save settings.')
-    } else {
-      setSuccess('Settings saved!')
-    }
-    setLoading(false)
-  }
-
-  if (loading) return <div>Loading...</div>
-  if (error) return <div className="text-red-500">{error}</div>
-  if (!settings) return <div>No settings found.</div>
+  if (loading) return <div className="p-8 text-center">Loading...</div>
+  if (error) return <div className="p-8 text-center text-red-500">{error}</div>
 
   return (
     <div className="min-h-screen bg-blue-50 dark:bg-gray-900 p-4">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Settings</h1>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400 space-y-6">
+        <form onSubmit={handleSave} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400 space-y-6">
           <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
             <div>
               <span className="text-gray-900 dark:text-white font-medium">Notifications</span>
@@ -195,26 +180,18 @@ export default function SettingsPage() {
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
             </label>
           </div>
-        </div>
 
-        <button
-          className="mt-6 w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={handleSave}
-          disabled={loading}
-        >
-          {loading ? 'Saving...' : 'Save Changes'}
-        </button>
-        
-        {success && (
-          <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/50 text-green-600 dark:text-green-400 rounded-lg text-center">
-            {success}
-          </div>
-        )}
-        {error && (
-          <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg text-center">
-            {error}
-          </div>
-        )}
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            {saving ? "Saving..." : "Save Settings"}
+          </button>
+          {saved && (
+            <div className="text-green-600 dark:text-green-400 text-center mt-2">Settings saved!</div>
+          )}
+        </form>
       </div>
     </div>
   )

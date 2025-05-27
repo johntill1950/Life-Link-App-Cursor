@@ -52,4 +52,25 @@ CREATE POLICY "Users can view their own alarm settings" ON public.alarm_settings
     FOR SELECT USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can update their own alarm settings" ON public.alarm_settings
-    FOR UPDATE USING (auth.uid() = user_id); 
+    FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can access their own files"
+ON storage.objects FOR SELECT
+USING (
+  bucket_id = 'user-docs'
+  AND split_part(name, '/', 1) = auth.uid()::text
+);
+
+CREATE POLICY "Users can upload their own files"
+ON storage.objects FOR INSERT
+WITH CHECK (
+  bucket_id = 'user-docs'
+  AND split_part(name, '/', 1) = auth.uid()::text
+);
+
+CREATE POLICY "Users can delete their own files"
+ON storage.objects FOR DELETE
+USING (
+  bucket_id = 'user-docs'
+  AND split_part(name, '/', 1) = auth.uid()::text
+); 

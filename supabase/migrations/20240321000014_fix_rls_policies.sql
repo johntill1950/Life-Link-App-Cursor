@@ -30,4 +30,8 @@ USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert their own settings"
 ON public.settings
 FOR INSERT
-WITH CHECK (auth.uid() = user_id); 
+WITH CHECK (auth.uid() = user_id);
+
+-- Grant necessary permissions
+GRANT ALL ON public.settings TO authenticated;
+GRANT ALL ON public.settings TO service_role; 
