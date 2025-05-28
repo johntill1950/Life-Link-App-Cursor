@@ -102,8 +102,8 @@ export default function ProfilePage() {
     const phoneFields = ['emergency_contact1_phone', 'emergency_contact2_phone', 'emergency_contact3_phone'];
     for (const field of phoneFields) {
       const phone = profile[field];
-      if (phone && !/^\d{10}$/.test(phone)) {
-        setError(`Please ensure ${field.replace('_', ' ')} is 10 digits.`);
+      if (phone && !/^0\d{9}$|^0\d{1} \d{9}$|^0\d{1} \d{8}$/.test(phone)) {
+        setError(`Please ensure ${field.replace('_', ' ')} is in format: 0123456789, 01 123456789, or 01 12345678`);
         setSaving(false);
         return;
       }
@@ -190,11 +190,11 @@ export default function ProfilePage() {
               />
               <input
                 type="tel"
-                placeholder="Mobile # (eg: 0412345678)"
+                placeholder="Mobile # eg: 0123456789"
                 value={profile.emergency_contact1_phone}
                 onChange={e => handleChange("emergency_contact1_phone", e.target.value)}
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                pattern="^\\d{10}$"
+                pattern="^0\d{9}$|^0\d{1} \d{9}$|^0\d{1} \d{8}$"
                 inputMode="tel"
               />
             </div>
@@ -211,11 +211,11 @@ export default function ProfilePage() {
               />
               <input
                 type="tel"
-                placeholder="Mobile # (eg: 0412345678)"
+                placeholder="Mobile # eg: 0123456789"
                 value={profile.emergency_contact2_phone}
                 onChange={e => handleChange("emergency_contact2_phone", e.target.value)}
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                pattern="^\\d{10}$"
+                pattern="^0\d{9}$|^0\d{1} \d{9}$|^0\d{1} \d{8}$"
                 inputMode="tel"
               />
             </div>
@@ -232,11 +232,11 @@ export default function ProfilePage() {
               />
               <input
                 type="tel"
-                placeholder="Mobile # (eg: 0412345678)"
+                placeholder="Mobile # eg: 0123456789"
                 value={profile.emergency_contact3_phone}
                 onChange={e => handleChange("emergency_contact3_phone", e.target.value)}
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                pattern="^\\d{10}$"
+                pattern="^0\d{9}$|^0\d{1} \d{9}$|^0\d{1} \d{8}$"
                 inputMode="tel"
               />
             </div>
@@ -247,10 +247,9 @@ export default function ProfilePage() {
                 placeholder="Please be brief...."
                 value={profile.medical_history || ''}
                 onChange={e => handleChange("medical_history", e.target.value)}
-                rows={Math.min(12, (profile.medical_history?.split('\n').length || 1))}
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 maxLength={500}
-                style={{ minHeight: '3em', maxHeight: '12em' }}
+                style={{ height: '14em', resize: 'none' }}
               />
               <p className="text-sm text-gray-500 dark:text-gray-400">Characters remaining: {500 - (profile.medical_history?.length || 0)}</p>
             </div>
@@ -260,10 +259,9 @@ export default function ProfilePage() {
                 placeholder="Please be brief...."
                 value={profile.medications || ''}
                 onChange={e => handleChange("medications", e.target.value)}
-                rows={Math.min(12, (profile.medications?.split('\n').length || 1))}
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 maxLength={500}
-                style={{ minHeight: '3em', maxHeight: '12em' }}
+                style={{ height: '14em', resize: 'none' }}
               />
               <p className="text-sm text-gray-500 dark:text-gray-400">Characters remaining: {500 - (profile.medications?.length || 0)}</p>
             </div>
@@ -273,10 +271,9 @@ export default function ProfilePage() {
                 placeholder="Please be brief...."
                 value={profile.special_notes || ''}
                 onChange={e => handleChange("special_notes", e.target.value)}
-                rows={Math.min(12, (profile.special_notes?.split('\n').length || 1))}
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 maxLength={500}
-                style={{ minHeight: '3em', maxHeight: '12em' }}
+                style={{ height: '14em', resize: 'none' }}
               />
               <p className="text-sm text-gray-500 dark:text-gray-400">Characters remaining: {500 - (profile.special_notes?.length || 0)}</p>
             </div>
