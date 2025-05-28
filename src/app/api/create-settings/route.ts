@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const { error } = await supabase
       .from('settings')
       .insert({
-        user_id: userId,
+        id: userId,
         notifications_enabled: true,
         location_tracking_enabled: true,
         dark_mode_enabled: false,

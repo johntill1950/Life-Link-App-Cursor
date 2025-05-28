@@ -1,4 +1,6 @@
 import { fetchUserRole } from '@/lib/documentService';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const [role, setRole] = useState('user');
 
@@ -23,6 +25,6 @@ const handleDelete = async (userId, fileUrl, userRole) => {
     await deleteUserDocument(userId, fileUrl, userRole);
     // ...refresh or update state as needed...
   } catch (err) {
-    alert(err.message);
+    toast.error(err.message);
   }
 }; 

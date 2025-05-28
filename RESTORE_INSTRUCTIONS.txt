@@ -1,0 +1,43 @@
+LIFE-LINK APP RESTORE INSTRUCTIONS
+=================================
+
+Follow these steps to restore your project from this backup on a new computer:
+
+1. Install Node.js
+------------------
+- Download and install Node.js (LTS version) from https://nodejs.org/
+
+2. Open the Project in Your Code Editor
+---------------------------------------
+- Open this project folder in Cursor or your preferred code editor.
+
+3. Restore Project Dependencies
+------------------------------
+- Open a terminal in the project root (the folder with package.json).
+- Run:
+  npm install
+- This will recreate the node_modules folder with all required packages.
+
+4. (Optional) Build or Start the Project
+----------------------------------------
+- For development, run:
+  npm run dev
+- To build for production, run:
+  npm run build
+
+5. (Optional) Install Other Tools
+---------------------------------
+- If your project uses other tools (e.g., Supabase CLI, Firebase CLI), reinstall them as needed.
+
+6. Restore Environment Variables
+-------------------------------
+- If you use a .env file or other secrets, copy them into the project root.
+- These files are often not included in backups for security reasons.
+
+7. You're Ready!
+----------------
+- Your project should now be restored and ready to use.
+
+---
+
+Keep this file in your backup for easy reference! 

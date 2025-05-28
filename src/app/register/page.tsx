@@ -138,7 +138,7 @@ export default function Register() {
       const { data: existingSettings, error: checkError } = await supabase
         .from('settings')
         .select('*')
-        .eq('user_id', signInData.user.id)
+        .eq('id', signInData.user.id)
         .single()
 
       if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"

@@ -32,11 +32,41 @@ export default function DashboardPage() {
     heartRate: 75,
     oxygen: 98,
     movement: 45,
-    location: 'Loading location...',
+    location: 'Click to enable location tracking',
     coordinates: { lat: 0, lng: 0 }
   })
   const [settings, setSettings] = useState<{ location_tracking_enabled: boolean }>({ location_tracking_enabled: true });
   const [lastLocationUpdate, setLastLocationUpdate] = useState<number>(0);
+
+  const requestLocation = () => {
+    if (navigator.geolocation && settings.location_tracking_enabled) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const { latitude, longitude } = position.coords
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            )
+            const data = await response.json()
+            const location = data.display_name.split(',').slice(0, 2).join(',')
+            setCurrentMetrics(prev => ({ 
+              ...prev, 
+              location,
+              coordinates: { lat: latitude, lng: longitude }
+            }))
+            setLastLocationUpdate(Date.now());
+          } catch (error) {
+            console.error('Error fetching location:', error)
+            setCurrentMetrics(prev => ({ ...prev, location: 'Location unavailable' }))
+          }
+        },
+        (error) => {
+          console.error('Error getting location:', error)
+          setCurrentMetrics(prev => ({ ...prev, location: 'Location unavailable' }))
+        }
+      )
+    }
+  };
 
   useEffect(() => {
     async function checkUser() {
@@ -53,46 +83,31 @@ export default function DashboardPage() {
           .select('location_tracking_enabled')
           .eq('id', user.id)
           .single();
+        
         if (settingsError) {
           console.error('Error fetching settings:', settingsError);
+          // Create default settings if they don't exist
+          if (settingsError.code === 'PGRST116') {
+            const { error: insertError } = await supabase
+              .from('settings')
+              .insert([
+                { 
+                  id: user.id,
+                  location_tracking_enabled: true 
+                }
+              ]);
+            if (insertError) {
+              console.error('Error creating settings:', insertError);
+            } else {
+              setSettings({ location_tracking_enabled: true });
+            }
+          }
         } else if (settingsData) {
           setSettings(settingsData);
         }
       }
     }
     checkUser();
-
-    // Get actual location only if location tracking is enabled and 5 minutes have passed
-    const now = Date.now();
-    if (navigator.geolocation && settings.location_tracking_enabled && now - lastLocationUpdate >= 300000) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            const { latitude, longitude } = position.coords
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-            )
-            const data = await response.json()
-            const location = data.display_name.split(',').slice(0, 2).join(',')
-            setCurrentMetrics(prev => ({ 
-              ...prev, 
-              location,
-              coordinates: { lat: latitude, lng: longitude }
-            }))
-            setLastLocationUpdate(now);
-          } catch (error) {
-            console.error('Error fetching location:', error)
-            setCurrentMetrics(prev => ({ ...prev, location: 'Location unavailable' }))
-          }
-        },
-        (error) => {
-          console.error('Error getting location:', error)
-          setCurrentMetrics(prev => ({ ...prev, location: 'Location unavailable' }))
-        }
-      )
-    } else if (!settings.location_tracking_enabled) {
-      setCurrentMetrics(prev => ({ ...prev, location: 'Location tracking disabled' }));
-    }
 
     const interval = setInterval(() => {
       setData(generateDummyData())
@@ -105,7 +120,7 @@ export default function DashboardPage() {
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [settings.location_tracking_enabled, lastLocationUpdate]);
+  }, [settings.location_tracking_enabled]);
 
   if (authLoading) return <div>Loading...</div>;
   if (!user) return null;
@@ -142,13 +157,13 @@ export default function DashboardPage() {
         {(
           currentMetrics.coordinates.lat === 0 ||
           currentMetrics.location === 'Location unavailable' ||
-          currentMetrics.location === 'Loading location...'
+          currentMetrics.location === 'Click to enable location tracking'
         ) && (
           <button
-            onClick={() => setLastLocationUpdate(0)}
+            onClick={requestLocation}
             className="mt-2 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 float-right"
           >
-            Restart Location Tracking
+            Enable Location Tracking
           </button>
         )}
       </div>
