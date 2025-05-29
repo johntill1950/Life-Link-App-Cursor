@@ -1,43 +1,66 @@
-LIFE-LINK APP RESTORE INSTRUCTIONS
-=================================
+Life Link App Backup and Restore Instructions
+===========================================
 
-Follow these steps to restore your project from this backup on a new computer:
+Backup Process
+-------------
+The backup script (backup_life_link_app.sh) performs the following actions:
+1. Creates a timestamped backup folder
+2. Stages and commits all current changes
+3. Pushes the current branch to GitHub
+4. Merges changes into the main branch
+5. Pushes the main branch to GitHub
+6. Creates a complete backup of the project
+7. Creates a zip archive of the backup
+8. Includes a backup_info.txt file with restoration instructions
 
-1. Install Node.js
-------------------
-- Download and install Node.js (LTS version) from https://nodejs.org/
+How to Run the Backup Script
+---------------------------
+1. Open Terminal
+2. Navigate to your project directory:
+   cd /path/to/life-link-app
 
-2. Open the Project in Your Code Editor
----------------------------------------
-- Open this project folder in Cursor or your preferred code editor.
+3. Make the script executable (first time only):
+   chmod +x backup_life_link_app.sh
 
-3. Restore Project Dependencies
-------------------------------
-- Open a terminal in the project root (the folder with package.json).
-- Run:
-  npm install
-- This will recreate the node_modules folder with all required packages.
+4. Run the backup script:
+   ./backup_life_link_app.sh
 
-4. (Optional) Build or Start the Project
-----------------------------------------
-- For development, run:
-  npm run dev
-- To build for production, run:
-  npm run build
+The script will:
+- Save all your current work
+- Push changes to GitHub
+- Create a backup zip file named "life_link_backup_YYYYMMDD_HHMMSS.zip"
 
-5. (Optional) Install Other Tools
----------------------------------
-- If your project uses other tools (e.g., Supabase CLI, Firebase CLI), reinstall them as needed.
+Restore Process
+--------------
+To restore from a backup:
 
-6. Restore Environment Variables
--------------------------------
-- If you use a .env file or other secrets, copy them into the project root.
-- These files are often not included in backups for security reasons.
+1. Unzip the backup file:
+   unzip life_link_backup_YYYYMMDD_HHMMSS.zip
 
-7. You're Ready!
-----------------
-- Your project should now be restored and ready to use.
+2. Navigate to the unzipped folder:
+   cd life_link_backup_YYYYMMDD_HHMMSS
 
----
+3. Install dependencies:
+   npm install
 
-Keep this file in your backup for easy reference! 
+4. Start the development server:
+   npm run dev
+
+Important Notes
+--------------
+- The backup includes all project files, including node_modules
+- The backup preserves your Git history
+- Your current branch and main branch are both updated on GitHub
+- The backup script automatically handles all Git operations
+- The backup includes a backup_info.txt file with detailed information about the backup
+
+Troubleshooting
+--------------
+If you encounter any issues:
+
+1. Check that you have Git installed and configured
+2. Ensure you have proper GitHub credentials set up
+3. Verify you have sufficient disk space for the backup
+4. Make sure you have proper permissions in the project directory
+
+For additional help, check the backup_info.txt file in your backup folder. 
