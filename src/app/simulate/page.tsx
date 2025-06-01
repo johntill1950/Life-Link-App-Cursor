@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { testDatabaseConnection } from '@/lib/testFirebase';
+// import { notificationService } from '@/lib/notificationService';
 
-const SIREN_URL = "https://cdn.pixabay.com/audio/2022/07/26/audio_124bfae5b2.mp3"; // Public domain ambulance siren
+const SIREN_URL = "/Siren.mp3"; // Use local siren audio from public folder
 
 export default function SimulatePage() {
   // State for simulated vitals
@@ -23,6 +25,7 @@ export default function SimulatePage() {
   const sirenRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [pauseMonitoring, setPauseMonitoring] = useState(false);
+  const [dbTestResult, setDbTestResult] = useState<string | null>(null);
 
   // Resume monitoring handler
   const handleResumeMonitoring = () => {
@@ -93,13 +96,38 @@ export default function SimulatePage() {
     };
   }, [showAlarm]);
 
-  // Handle timer reaching zero or Cancel Alarm pressed
+  const sendEmergencyNotification = async () => {
+    try {
+      // await notificationService.createAlert({
+      //   userId: 'admin',
+      //   userName: 'Admin (Simulated)',
+      //   location: {
+      //     lat: 0,
+      //     lng: 0,
+      //     address: 'Simulated Location'
+      //   },
+      //   vitals: {
+      //     heartRate,
+      //     oxygen,
+      //     movement
+      //   },
+      //   timestamp: Date.now(),
+      //   screenshot: ''
+      // });
+      console.log('Emergency notification sent!');
+    } catch (error) {
+      console.error('Failed to send emergency notification:', error);
+    }
+  };
+
   useEffect(() => {
     if ((showAlarm && countdown === 0) || (!showAlarm && emergencyTriggered)) {
       setEmergencyTriggered(true);
       if (sirenRef.current) sirenRef.current.pause();
       if (timerRef.current) clearInterval(timerRef.current);
       setShowAlarm(false); // Close modal automatically
+
+      sendEmergencyNotification();
     }
   }, [countdown, showAlarm]);
 
@@ -114,6 +142,19 @@ export default function SimulatePage() {
     setCountdown(0);
     if (sirenRef.current) sirenRef.current.pause();
     if (timerRef.current) clearInterval(timerRef.current);
+  };
+
+  const handleTestConnection = async () => {
+    try {
+      const result = await testDatabaseConnection();
+      if (result.success) {
+        setDbTestResult('Database connection successful! Check console for details.');
+      } else {
+        setDbTestResult('Database connection failed. Check console for details.');
+      }
+    } catch (error) {
+      setDbTestResult('Test failed. Check console for details.');
+    }
   };
 
   return (
@@ -155,6 +196,15 @@ export default function SimulatePage() {
           </div>
         </div>
       </div>
+      <button
+        onClick={handleTestConnection}
+        className="mt-6 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      >
+        Test Database Connection
+      </button>
+      {dbTestResult && (
+        <div className="mt-2 text-center text-sm text-blue-700 dark:text-blue-300">{dbTestResult}</div>
+      )}
 
       {/* Alarm Modal */}
       {showAlarm && (
@@ -183,6 +233,13 @@ export default function SimulatePage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {!showAlarm && emergencyTriggered && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50">
+          <h3 className="font-bold">EMERGENCY NOTIFICATION SENT!</h3>
+          <p className="text-sm">An emergency alert has been triggered and notifications have been sent.</p>
         </div>
       )}
     </div>

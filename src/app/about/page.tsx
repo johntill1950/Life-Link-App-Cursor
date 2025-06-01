@@ -38,7 +38,7 @@ export default function AboutPage() {
 
   useEffect(() => {
     if (!user && !userLoading) {
-      router.push('/login');
+      router.push('/');
       return;
     }
     if (!user) return;

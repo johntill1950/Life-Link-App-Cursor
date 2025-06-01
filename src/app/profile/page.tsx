@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useUser } from "@/lib/useUser";
 import { fetchUserProfile, upsertUserProfile } from "@/lib/userService";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseClient } from '@/lib/supabase';
 
 const initialProfile = {
   full_name: "",
@@ -26,6 +26,13 @@ const initialProfile = {
 
 type ProfileType = typeof initialProfile;
 
+interface EmergencyContact {
+  name: string;
+  phone: string;
+  email: string;
+  relationship: string;
+}
+
 export default function ProfilePage() {
   const [profile, setProfile] = useState<ProfileType>({ ...initialProfile });
   const [loading, setLoading] = useState(true);
@@ -35,6 +42,12 @@ export default function ProfilePage() {
   const [showAlarm, setShowAlarm] = useState(false);
   const { user, loading: userLoading } = useUser();
   const router = useRouter();
+  const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([
+    { name: '', phone: '', email: '', relationship: '' },
+    { name: '', phone: '', email: '', relationship: '' },
+    { name: '', phone: '', email: '', relationship: '' }
+  ]);
+  const supabase = getSupabaseClient();
 
   useEffect(() => {
     let mounted = true;
@@ -69,7 +82,7 @@ export default function ProfilePage() {
           setTimeout(attemptFetch, 1000);
           return;
         }
-        router.push('/login');
+        router.push('/');
         return;
       }
       if (user) {
@@ -118,6 +131,46 @@ export default function ProfilePage() {
     setSaving(false);
   };
 
+  const handleEmergencyContactChange = (index: number, field: keyof EmergencyContact, value: string) => {
+    const newContacts = [...emergencyContacts];
+    newContacts[index] = {
+      ...newContacts[index],
+      [field]: value
+    };
+    setEmergencyContacts(newContacts);
+  };
+
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const handleSaveEmergencyContacts = async () => {
+    try {
+      // Validate emails
+      for (const contact of emergencyContacts) {
+        if (contact.email && !validateEmail(contact.email)) {
+          alert('Please enter valid email addresses for all emergency contacts');
+          return;
+        }
+      }
+
+      const { error } = await supabase
+        .from('emergency_contacts')
+        .upsert(
+          emergencyContacts.map(contact => ({
+            user_id: user?.id,
+            ...contact
+          }))
+        );
+
+      if (error) throw error;
+      alert('Emergency contacts saved successfully!');
+    } catch (error) {
+      console.error('Error saving emergency contacts:', error);
+      alert('Failed to save emergency contacts. Please try again.');
+    }
+  };
+
   if (!user) {
     return <div>Loading...</div>;
   }
@@ -126,7 +179,7 @@ export default function ProfilePage() {
   if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
 
   return (
-    <div className="min-h-screen bg-blue-50 dark:bg-gray-900 container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-blue-50 dark:bg-gray-900 p-4 space-y-6">
       <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Profile</h1>
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border-t-8 border-blue-400 p-6">
@@ -197,6 +250,13 @@ export default function ProfilePage() {
                 pattern="^0\d{9}$|^0\d{1} \d{9}$|^0\d{1} \d{8}$"
                 inputMode="tel"
               />
+              <input
+                type="email"
+                placeholder="Email"
+                value={profile.emergency_contact1_email || ''}
+                onChange={e => handleChange("emergency_contact1_email", e.target.value)}
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mt-2"
+              />
             </div>
 
             {/* Emergency Contact 2 Group */}
@@ -218,6 +278,13 @@ export default function ProfilePage() {
                 pattern="^0\d{9}$|^0\d{1} \d{9}$|^0\d{1} \d{8}$"
                 inputMode="tel"
               />
+              <input
+                type="email"
+                placeholder="Email"
+                value={profile.emergency_contact2_email || ''}
+                onChange={e => handleChange("emergency_contact2_email", e.target.value)}
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mt-2"
+              />
             </div>
 
             {/* Emergency Contact 3 Group */}
@@ -238,6 +305,13 @@ export default function ProfilePage() {
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 pattern="^0\d{9}$|^0\d{1} \d{9}$|^0\d{1} \d{8}$"
                 inputMode="tel"
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                value={profile.emergency_contact3_email || ''}
+                onChange={e => handleChange("emergency_contact3_email", e.target.value)}
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mt-2"
               />
             </div>
 

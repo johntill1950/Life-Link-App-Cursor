@@ -73,7 +73,7 @@ export async function fetchUserSettings(userId: string) {
   const supabase = getSupabaseClient();
   const defaults = {
     notifications_enabled: true,
-    location_tracking_enabled: true,
+    location_tracking_enabled: false,
     dark_mode_enabled: false,
     emergency_alerts_enabled: true,
   };
@@ -84,7 +84,7 @@ export async function fetchUserSettings(userId: string) {
       .eq('id', userId)
       .single();
     if (error && error.code === 'PGRST116') {
-      // No settings row exists, create one
+      // No settings row exists, create one with defaults
       await supabase.from('settings').insert({ id: userId, ...defaults });
       // Optionally, fetch again
     } else if (error) {
@@ -98,13 +98,12 @@ export async function fetchUserSettings(userId: string) {
 
 export async function upsertUserSettings(userId: string, settings: any) {
   const supabase = getSupabaseClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('settings')
     .upsert({
       id: userId,
       ...settings,
-      updated_at: new Date().toISOString(),
     });
   if (error) throw error;
-  return true;
+  return data;
 } 

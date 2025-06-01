@@ -1,5 +1,7 @@
 "use client";
 
+import { format } from 'date-fns';
+
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-blue-50 dark:bg-gray-900 container mx-auto px-4 py-8">
@@ -100,7 +102,7 @@ export default function PrivacyPage() {
 
           <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Last updated: {new Date().toLocaleDateString()}
+              Last updated: {format(new Date(), 'dd/MM/yyyy')}
             </p>
           </div>
         </div>

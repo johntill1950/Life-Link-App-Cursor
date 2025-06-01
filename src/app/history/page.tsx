@@ -76,7 +76,7 @@ export default function HistoryPage() {
 
   useEffect(() => {
     if (!user && !userLoading) {
-      router.push("/login");
+      router.push('/');
       return;
     }
   }, [user, userLoading]);

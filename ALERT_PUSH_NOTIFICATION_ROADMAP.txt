@@ -1,0 +1,59 @@
+ALERT PUSH NOTIFICATION ROADMAP
+====================================
+
+Goal: Secure, scalable, cross-platform (iOS, Android, Web) push notifications for emergency alerts, using a free and globally accessible service (e.g., Firebase Cloud Messaging).
+
+---
+
+1. **Choose Push Notification Service**
+   - [ ] Use Firebase Cloud Messaging (FCM) for iOS, Android, and Web (free, widely supported, not easily revoked)
+
+2. **Set Up Firebase Project**
+   - [ ] Create a Firebase project at https://console.firebase.google.com/
+   - [ ] Enable Cloud Messaging
+   - [ ] Add iOS, Android, and Web apps to the project
+   - [ ] Download and add config files (google-services.json, GoogleService-Info.plist, firebase-config for web)
+
+3. **Integrate FCM in Your App**
+   - [ ] For Web: Set up Firebase JS SDK and FCM in your React/Next.js app
+   - [ ] For Android: Integrate FCM in your native or React Native app
+   - [ ] For iOS: Integrate FCM in your native or React Native app (handle APNs setup)
+
+4. **User Authentication & Authorization**
+   - [ ] Require all emergency contacts and call center staff to register/login in your app
+   - [ ] Store user/device FCM tokens in your database, linked to user/contact IDs
+   - [ ] Add UI for users to manage (enable/disable) which contacts can receive alerts
+
+5. **Triggering Notifications**
+   - [ ] When an alert is triggered, backend fetches FCM tokens for authorized contacts/call center
+   - [ ] Send push notification via FCM to those tokens
+   - [ ] Notification includes a link/deep link to the live dashboard (requires authentication)
+
+6. **Live Dashboard Access**
+   - [ ] Create a shared dashboard route/page that shows real-time data (read-only for contacts)
+   - [ ] Ensure only authenticated, authorized users can access the dashboard
+
+7. **User Control & Audit**
+   - [ ] Allow users to enable/disable access for each contact (toggle in settings)
+   - [ ] Log notification sends and dashboard accesses for auditing
+
+8. **Testing & Internationalization**
+   - [ ] Test notifications on iOS, Android, and Web (multiple countries, networks)
+   - [ ] Ensure UI/UX is accessible and clear for all users
+
+9. **(Optional) Add Email as Backup**
+   - [ ] Add email notifications as a fallback for contacts who do not use the app
+
+---
+
+**NOTES:**
+- FCM is free, global, and works on all major platforms
+- No need for paid email services unless you want email as a backup
+- All logic for notifications and dashboard access should be secure and respect user privacy
+- This roadmap can be tackled in stages/sessions as needed
+
+---
+
+**Next Steps:**
+- [ ] Confirm Firebase project setup and platform targets
+- [ ] Begin with FCM integration for your main platform (web, then mobile) 

@@ -122,13 +122,13 @@ export default function Register() {
       if (signInError) {
         console.error('Sign In Error:', signInError)
         // If sign in fails, redirect to login page with a message
-        router.push('/login?message=Registration successful. Please sign in.')
+        router.push('/?message=Registration successful. Please sign in.')
         return
       }
 
       if (!signInData.user) {
         console.error('No user data returned from sign in')
-        router.push('/login?message=Registration successful. Please sign in.')
+        router.push('/?message=Registration successful. Please sign in.')
         return
       }
 
@@ -207,7 +207,7 @@ export default function Register() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
             Or{' '}
-            <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
+            <Link href="/" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
               sign in to your account
             </Link>
           </p>
