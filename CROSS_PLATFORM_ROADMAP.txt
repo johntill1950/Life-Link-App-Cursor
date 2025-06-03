@@ -1,0 +1,96 @@
+CROSS-PLATFORM APP ROADMAP & BEST PRACTICES
+===========================================
+
+GOALS:
+------
+- Native iOS & Android app (with push notifications)
+- Web-based user interface (e.g., for Emergency Service Providers)
+- Two-way notifications between all platforms (using native push, not email)
+- Easy reviewer access during development (shareable, interactive preview links)
+- Low cost, easy development, and future scalability
+
+RECOMMENDED STACK & PATHWAY:
+----------------------------
+A. Use a Cross-Platform Framework
+   - React Native (for iOS & Android)
+     - Shares much of your current React/Next.js codebase.
+     - Integrates well with Firebase for auth, database, and notifications.
+   - Next.js (Web)
+     - Continue using for your web dashboard and admin/reviewer interface.
+
+B. Use Firebase for Backend
+   - Authentication: Handles users across web and mobile.
+   - Firestore/Realtime Database: Stores and syncs data in real time.
+   - Cloud Messaging (FCM): Free, instant push notifications to iOS, Android, and web.
+   - Hosting: For your web app, with free SSL and custom domains.
+
+C. Use Vercel for Web Previews
+   - Free for personal/small team use.
+   - Deploys every branch/PR to a unique URL (great for reviewers).
+   - Integrates with GitHub for CI/CD.
+
+HOW THIS MEETS YOUR NEEDS:
+--------------------------
+| Need                | Solution                        | Cost                        |
+|---------------------|---------------------------------|-----------------------------|
+| Native iOS/Android  | React Native + Firebase         | Free to start, $99/yr Apple, $25 one-time Google |
+| Web dashboard       | Next.js + Firebase + Vercel     | Free for small projects     |
+| Two-way notifications | Firebase Cloud Messaging      | Free                        |
+| Reviewer access     | Vercel preview URLs             | Free                        |
+| Scalability         | Firebase scales automatically   | Pay as you grow             |
+
+DEVELOPMENT & REVIEWER WORKFLOW:
+-------------------------------
+- Develop locally using Cursor/VSCode.
+- Push to GitHub.
+- Vercel auto-deploys every branch/PR to a unique preview URL (e.g., https://your-branch-name.vercel.app).
+- Share preview links with reviewers for interactive testing.
+- For mobile:
+    - Use Expo (with React Native) for easy device testing and sharing (Expo Go app, QR codes).
+    - When ready, build native binaries for App Store/Play Store.
+
+PUSH NOTIFICATIONS: HOW IT WORKS
+--------------------------------
+- Web: Use Firebase Cloud Messaging (FCM) for browser push notifications.
+- Mobile: FCM integrates with both iOS and Android for native push.
+- Two-way: Any user (web or mobile) can trigger notifications to others via Firebase functions or direct FCM calls.
+
+POTENTIAL DIFFICULTIES & COSTS:
+-------------------------------
+Difficulties:
+- React Native learning curve if you haven't used it before (but similar to React).
+- Push notification setup for iOS requires Apple Developer account and certificates.
+- App Store/Play Store review process for public release.
+- Some platform-specific code may be needed for advanced features.
+
+Costs:
+- Firebase: Free tier is generous; costs scale with usage.
+- Vercel: Free for personal/small team, paid for advanced features.
+- Apple Developer: $99/year (required for iOS push and App Store).
+- Google Play: $25 one-time.
+
+BEST PRACTICE PATHWAY:
+----------------------
+1. Continue developing your web app with Next.js, Firebase, and Vercel.
+2. Set up Vercel preview deployments for easy reviewer access.
+3. Start a React Native project (with Expo) for mobile apps.
+4. Share code and logic between web and mobile where possible.
+5. Integrate Firebase Auth, Firestore, and FCM in both web and mobile.
+6. Test push notifications on all platforms.
+7. Invite reviewers to Vercel preview URLs (web) and Expo Go links (mobile).
+8. When ready, build and submit native apps to the App Store and Play Store.
+
+RESOURCES:
+----------
+- Vercel Docs: https://vercel.com/docs/deployments/preview-deployments
+- Expo (React Native) Docs: https://docs.expo.dev/
+- Firebase Cloud Messaging Docs: https://firebase.google.com/docs/cloud-messaging
+- React Native Firebase: https://rnfirebase.io/
+
+SUMMARY TABLE:
+--------------
+| Platform      | Tech                        | Reviewer Access         | Notifications      | Cost                        |
+|---------------|-----------------------------|------------------------|--------------------|-----------------------------|
+| Web           | Next.js + Vercel + Firebase | Vercel preview URLs    | FCM (browser push) | Free                        |
+| iOS/Android   | React Native (Expo) + Firebase | Expo Go QR code     | FCM (native push)  | Apple: $99/yr, Google: $25  |
+| Backend       | Firebase                    | N/A                    | N/A                | Free (scales with use)      | 

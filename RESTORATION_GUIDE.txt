@@ -1,0 +1,141 @@
+Life Link App - Complete Restoration Guide
+========================================
+
+This guide will help you restore your development environment after a catastrophic failure, assuming you have your backup file (life_link_backup_YYYYMMDD_HHMMSS.tar.gz) saved on an external drive.
+
+Prerequisites
+------------
+1. A working computer with macOS
+2. Your backup file on an external drive
+3. Internet connection
+4. Administrator access to your computer
+
+Step 1: Install Essential Development Tools
+-----------------------------------------
+1. Install Node.js and npm:
+   - Visit https://nodejs.org/
+   - Download and install the LTS (Long Term Support) version
+   - Verify installation by opening Terminal and running:
+     node --version
+     npm --version
+
+2. Install Git:
+   - Visit https://git-scm.com/downloads
+   - Download and install the macOS version
+   - Verify installation by running:
+     git --version
+
+3. Install Cursor:
+   - Visit https://cursor.sh/
+   - Download and install the latest version
+   - Launch Cursor and complete the initial setup
+
+Step 2: Restore Your Project
+---------------------------
+1. Create a new project directory:
+   mkdir life-link-app
+   cd life-link-app
+
+2. Copy your backup file:
+   - Connect your external drive
+   - Copy life_link_backup_YYYYMMDD_HHMMSS.tar.gz to the life-link-app directory
+   - Make sure to replace YYYYMMDD_HHMMSS with your actual backup timestamp
+
+3. Extract the backup:
+   tar -xzf life_link_backup_YYYYMMDD_HHMMSS.tar.gz
+
+4. Navigate to the extracted directory:
+   cd life_link_backup_YYYYMMDD_HHMMSS
+
+5. Install project dependencies:
+   npm install
+
+6. Initialize Git repository:
+   git init
+   git add .
+   git commit -m "Initial commit after restoration"
+
+Step 3: Configure Environment Variables
+-------------------------------------
+1. Create a new .env file:
+   - Copy the contents from .env copy.local if it exists
+   - Or create a new .env file with the following structure:
+
+   # Supabase Configuration
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+   # Add any other environment variables your project needs
+
+2. Get your Supabase credentials:
+   - Log in to your Supabase dashboard
+   - Go to Project Settings > API
+   - Copy the Project URL and anon/public key
+   - Paste these values into your .env file
+
+Step 4: Configure Cursor
+-----------------------
+1. Open Cursor and configure your preferences:
+   - Go to Settings (⌘,)
+   - Set up your preferred theme
+   - Configure your keyboard shortcuts
+   - Set up any custom snippets you had before
+
+2. Install necessary Cursor extensions:
+   - Open the Extensions panel
+   - Install any extensions you were using before
+   - Recommended extensions:
+     - ESLint
+     - Prettier
+     - GitLens
+     - Tailwind CSS IntelliSense
+
+Step 5: Verify the Setup
+-----------------------
+1. Start the development server:
+   npm run dev
+
+2. Verify the application:
+   - Open http://localhost:3000 in your browser
+   - Check if the application loads correctly
+   - Test basic functionality
+
+3. Verify Git setup:
+   git status
+   git log
+
+Troubleshooting
+--------------
+If you encounter any issues:
+
+1. Node.js/npm issues:
+   - Try clearing npm cache: npm cache clean --force
+   - Delete node_modules and package-lock.json
+   - Run npm install again
+
+2. Environment variable issues:
+   - Double-check all values in .env
+   - Ensure no spaces around = signs
+   - Verify Supabase credentials
+
+3. Cursor issues:
+   - Try restarting Cursor
+   - Check Cursor's error logs
+   - Reinstall Cursor if necessary
+
+4. Git issues:
+   - Ensure Git is properly configured:
+     git config --global user.name "Your Name"
+     git config --global user.email "your.email@example.com"
+
+Additional Notes
+---------------
+- Keep your backup file in a safe place
+- Consider setting up automatic backups
+- Document any custom configurations you make
+- Keep your Supabase credentials secure
+
+For additional help:
+- Check the project's README.md
+- Review the backup_info.txt file in your backup
+- Contact the development team if needed 
