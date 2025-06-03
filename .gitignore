@@ -38,7 +38,7 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
-# Note: .env.local is NOT ignored
+
 
 # vercel
 .vercel
