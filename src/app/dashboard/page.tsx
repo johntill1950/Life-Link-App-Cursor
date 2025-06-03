@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { format, subMinutes } from 'date-fns'
+import { format } from 'date-fns'
 import { getSupabaseClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { testDatabaseConnection } from '@/lib/testFirebase';
@@ -13,8 +13,6 @@ import AuthForm from '@/components/AuthForm';
 import NotificationButton from '@/components/NotificationButton';
 import { fetchUserProfile, upsertUserSettings } from '@/lib/userService';
 import { useUser } from '@/lib/useUser';
-import { fetchUserRole } from '@/lib/documentService';
-import ProfileSummary from '@/components/ProfileSummary';
 
 // Dummy data generator
 const generateDummyData = () => {
@@ -30,22 +28,6 @@ const generateDummyData = () => {
     })
   }
   
-  return data
-}
-
-// Dummy data generator for 60 minutes
-const generateSixtyMinuteData = () => {
-  const data = []
-  const now = new Date()
-  for (let i = 0; i < 60; i++) {
-    const time = subMinutes(now, 59 - i)
-    data.push({
-      time: format(time, 'HH:mm'),
-      heartRate: Math.floor(Math.random() * (100 - 60) + 60),
-      oxygen: Math.floor(Math.random() * (100 - 95) + 95),
-      movement: Math.floor(Math.random() * 100),
-    })
-  }
   return data
 }
 
@@ -73,11 +55,9 @@ export default function DashboardPage() {
   const { user: authUser, loading: userLoading } = useUser();
   const [profile, setProfile] = useState<any>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isTestMode, setIsTestMode] = useState(false);
 
   // For combined graph (60-minute)
-  const [sixtyMinuteData, setSixtyMinuteData] = useState(generateSixtyMinuteData());
+  const [sixtyMinuteData, setSixtyMinuteData] = useState(generateDummyData());
 
   const requestLocation = async () => {
     if (!user) return;
@@ -174,19 +154,17 @@ export default function DashboardPage() {
     checkUser();
 
     const interval = setInterval(() => {
-      if (!isTestMode) {  // Only update metrics if not in test mode
-        setData(generateDummyData())
-        setCurrentMetrics(prev => ({
-          ...prev,
-          heartRate: Math.floor(Math.random() * (100 - 60) + 60),
-          oxygen: Math.floor(Math.random() * (100 - 95) + 95),
-          movement: Math.floor(Math.random() * 100),
-        }))
-      }
+      setData(generateDummyData())
+      setCurrentMetrics(prev => ({
+        ...prev,
+        heartRate: Math.floor(Math.random() * (100 - 60) + 60),
+        oxygen: Math.floor(Math.random() * (100 - 95) + 95),
+        movement: Math.floor(Math.random() * 100),
+      }))
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [settings.location_tracking_enabled, isTestMode]);
+  }, [settings.location_tracking_enabled]);
 
   // Automatically fetch location when location tracking is enabled
   useEffect(() => {
@@ -304,21 +282,6 @@ export default function DashboardPage() {
     }
   }, [authUser]);
 
-  // Add useEffect to check admin status
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (user?.id) {
-        try {
-          const role = await fetchUserRole(user.id);
-          setIsAdmin(role === 'admin');
-        } catch (error) {
-          console.error('Error checking admin status:', error);
-        }
-      }
-    };
-    checkAdminStatus();
-  }, [user]);
-
   if (userLoading || profileLoading) return <div>Loading...</div>;
   if (!user || !profile) return null;
 
@@ -356,53 +319,8 @@ export default function DashboardPage() {
     }, 5000);
   };
 
-  // Add test mode toggle function
-  const toggleTestMode = () => {
-    if (isTestMode) {
-      // Reset metrics to normal values
-      setCurrentMetrics(prev => ({
-        ...prev,
-        heartRate: 75,
-        oxygen: 98,
-        movement: 45
-      }));
-    } else {
-      // Set metrics to emergency values
-      setCurrentMetrics(prev => ({
-        ...prev,
-        heartRate: 0,
-        oxygen: 0,
-        movement: 0
-      }));
-    }
-    setIsTestMode(!isTestMode);
-  };
-
   return (
     <div className="min-h-screen bg-blue-50 dark:bg-gray-900 p-4 space-y-6 dashboard-container">
-      {/* Admin Test Mode Switch */}
-      {isAdmin && (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg border-t-8 border-red-400 mb-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Admin Test Mode</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {isTestMode ? 'Emergency metrics are being simulated' : 'Toggle to simulate emergency metrics'}
-              </p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isTestMode}
-                onChange={toggleTestMode}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 dark:peer-focus:ring-red-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-red-600"></div>
-            </label>
-          </div>
-        </div>
-      )}
-
       {/* User Name & Address */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-t-8 border-blue-400 mb-2 flex flex-col items-start">
         <h1 className="text-3xl font-extrabold text-blue-700 dark:text-white mb-1">{profile.full_name}</h1>
@@ -458,18 +376,18 @@ export default function DashboardPage() {
       )}
 
       {/* Metrics Summary Cards */}
-      <div className="flex flex-row justify-center space-x-2 overflow-x-auto">
-        <div className="flex-shrink-0 w-[100px] bg-white dark:bg-gray-800 px-1 py-3 rounded-xl shadow-lg border-t-8 border-blue-400 flex flex-col items-center">
-          <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">Heart Rate</h3>
-          <p className="text-xl font-bold text-red-600 dark:text-red-400">{currentMetrics.heartRate} BPM</p>
+      <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+        <div className="flex-1 bg-white dark:bg-gray-800 px-[12px] py-6 rounded-xl shadow-lg border-t-8 border-blue-400 flex flex-col items-center">
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Heart Rate</h3>
+          <p className="text-2xl font-bold text-red-600 dark:text-red-400">{currentMetrics.heartRate} BPM</p>
         </div>
-        <div className="flex-shrink-0 w-[100px] bg-white dark:bg-gray-800 px-1 py-3 rounded-xl shadow-lg border-t-8 border-blue-400 flex flex-col items-center">
-          <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">Oxygen</h3>
-          <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{currentMetrics.oxygen}%</p>
+        <div className="flex-1 bg-white dark:bg-gray-800 px-[12px] py-6 rounded-xl shadow-lg border-t-8 border-blue-400 flex flex-col items-center">
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Oxygen</h3>
+          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{currentMetrics.oxygen}%</p>
         </div>
-        <div className="flex-shrink-0 w-[100px] bg-white dark:bg-gray-800 px-1 py-3 rounded-xl shadow-lg border-t-8 border-blue-400 flex flex-col items-center">
-          <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">Movement</h3>
-          <p className="text-xl font-bold text-green-600 dark:text-green-400">{currentMetrics.movement}%</p>
+        <div className="flex-1 bg-white dark:bg-gray-800 px-[12px] py-6 rounded-xl shadow-lg border-t-8 border-blue-400 flex flex-col items-center">
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Movement</h3>
+          <p className="text-2xl font-bold text-green-600 dark:text-green-400">{currentMetrics.movement}%</p>
         </div>
       </div>
 
@@ -481,11 +399,7 @@ export default function DashboardPage() {
             <LineChart data={sixtyMinuteData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis dataKey="time" stroke="#6b7280" />
-              <YAxis 
-                stroke="#6b7280"
-                domain={['auto', 'auto']}
-                allowDataOverflow={false}
-              />
+              <YAxis stroke="#6b7280" />
               <Tooltip 
                 contentStyle={{ 
                   backgroundColor: 'white',
@@ -516,15 +430,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-
-      {/* Emergency Profile Summary */}
-      {(isTestMode || (
-        currentMetrics.heartRate < alertThresholds.heartRate &&
-        currentMetrics.oxygen < alertThresholds.oxygen &&
-        currentMetrics.movement < alertThresholds.movement
-      )) && (
-        <ProfileSummary profile={profile} />
-      )}
     </div>
   )
 } 
