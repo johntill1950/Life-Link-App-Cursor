@@ -3,15 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useSupabase } from '../../components/SupabaseProvider'
 import { SupabaseClient } from '@supabase/supabase-js'
-import dynamic from 'next/dynamic'
-import 'react-quill/dist/quill.snow.css'
 import { useRouter } from "next/navigation";
 import { useUser } from '@/lib/useUser';
 
 const DUMMY_ABOUT = `<h2>About Life-Link.app</h2><p>This is <b>dummy about text</b> for demonstration. You can edit this as an admin.</p>`
 const DUMMY_HELP = `<h2>Help</h2><ul><li>Contact support at support@example.com</li><li>Read the FAQ</li></ul>`
-
-const ReactQuill: any = dynamic(() => import('react-quill'), { ssr: false })
 
 const TEXT_SIZES = [
   { label: 'Small', prose: 'prose', editor: 'about-text-sm', fontSize: '1rem' },
@@ -26,9 +22,6 @@ export default function AboutPage() {
   const [help, setHelp] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
   const router = useRouter();
   const supabase = useSupabase() as SupabaseClient | null;
   const { user, loading: userLoading } = useUser();
@@ -57,7 +50,6 @@ export default function AboutPage() {
           profileData = data;
         }
         const isUserAdmin = user?.user_metadata?.role === 'admin' || profileData?.is_admin
-        setIsAdmin(isUserAdmin)
         const { data, error } = await supabase
           .from('about_content')
           .select('section, content')
@@ -92,56 +84,6 @@ export default function AboutPage() {
     }
   }, [textSize]);
 
-  const handleSave = async () => {
-    setSaving(true)
-    setError(null)
-    try {
-      if (!supabase) throw new Error('Supabase client not available');
-      // First, get the existing records to get their IDs
-      const { data: existingData, error: fetchError } = await supabase
-        .from('about_content')
-        .select('id, section, content, last_updated')
-      const existing: { id?: number; section: string; content: string; last_updated: string }[] = existingData || []
-      // Find the IDs for about and help sections
-      const aboutId = existing.find(row => row.section === 'about')?.id ?? undefined
-      const helpId = existing.find(row => row.section === 'help')?.id ?? undefined
-      // Prepare the data for upsert
-      const aboutData: any = {
-        section: 'about',
-        content: about,
-        last_updated: new Date().toISOString()
-      }
-      const helpData: any = {
-        section: 'help',
-        content: help,
-        last_updated: new Date().toISOString()
-      }
-      // Add IDs if they exist
-      if (aboutId) aboutData.id = aboutId
-      if (helpId) helpData.id = helpId
-      // Upsert about
-      const { error: aboutError } = await supabase
-        .from('about_content')
-        .upsert(aboutData as any)
-      if (aboutError) {
-        throw aboutError
-      }
-      // Upsert help
-      const { error: helpError } = await supabase
-        .from('about_content')
-        .upsert(helpData as any)
-      if (helpError) {
-        throw helpError
-      }
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-    } catch (err: any) {
-      setError(err.message || 'Failed to save content')
-    } finally {
-      setSaving(false)
-    }
-  }
-
   if (userLoading) return <div>Loading...</div>;
   if (!user) return null;
   if (isLoading) {
@@ -171,49 +113,14 @@ export default function AboutPage() {
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">About</label>
-              {isAdmin ? (
-                <div className={editorSize}>
-                  <ReactQuill value={about} onChange={setAbout} theme="snow" />
-                  <style>{`
-                    .${editorSize} .ql-editor { font-size: ${editorFontSize} !important; }
-                  `}</style>
-                </div>
-              ) : (
-                <div className={`${textSize} prose dark:prose-invert bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg min-h-[120px]`} dangerouslySetInnerHTML={{ __html: about }} />
-              )}
+              <div className={`${textSize} prose dark:prose-invert bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg min-h-[120px]`} dangerouslySetInnerHTML={{ __html: about }} />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">Help</label>
-              {isAdmin ? (
-                <div className={editorSize}>
-                  <ReactQuill value={help} onChange={setHelp} theme="snow" />
-                  <style>{`
-                    .${editorSize} .ql-editor { font-size: ${editorFontSize} !important; }
-                  `}</style>
-                </div>
-              ) : (
-                <div className={`${textSize} prose dark:prose-invert bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg min-h-[120px]`} dangerouslySetInnerHTML={{ __html: help }} />
-              )}
+              <div className={`${textSize} prose dark:prose-invert bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg min-h-[120px]`} dangerouslySetInnerHTML={{ __html: help }} />
             </div>
           </div>
-
-          {isAdmin && (
-            <div className="mt-6">
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                {saving ? 'Saving...' : 'Save Changes'}
-              </button>
-              {(!saving && !error && saved) && (
-                <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/50 text-green-600 dark:text-green-400 rounded-lg text-center">
-                  Content saved!
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         <style jsx global>{`

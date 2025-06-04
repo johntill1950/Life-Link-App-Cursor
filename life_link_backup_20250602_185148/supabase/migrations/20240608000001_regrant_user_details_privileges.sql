@@ -1,1 +1,0 @@
-GRANT INSERT, SELECT, UPDATE ON public.user_details TO authenticated; 

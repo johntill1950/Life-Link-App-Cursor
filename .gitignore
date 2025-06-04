@@ -47,3 +47,15 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env.local
+
+# Ignore backup folders
+life_link_backup_*
+
+# Ignore Mac system files
+.DS_Store
+
+# Ignore backup archives
+*.tar.gz
+
+# Ignore Java jar files
+*.jar

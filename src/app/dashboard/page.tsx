@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { format } from 'date-fns'
 import { getSupabaseClient } from "@/lib/supabase";
@@ -58,6 +58,15 @@ export default function DashboardPage() {
 
   // For combined graph (60-minute)
   const [sixtyMinuteData, setSixtyMinuteData] = useState(generateDummyData());
+
+  const [showMedicalInfo, setShowMedicalInfo] = useState(false);
+  const medicalInfoTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const [defaults, setDefaults] = useState({
+    medical_history_default: '',
+    medications_default: '',
+    special_notes_default: ''
+  });
 
   const requestLocation = async () => {
     if (!user) return;
@@ -282,6 +291,38 @@ export default function DashboardPage() {
     }
   }, [authUser]);
 
+  // Update: Show medical info when alert is triggered, and for 30s after
+  useEffect(() => {
+    if (activeAlert) {
+      setShowMedicalInfo(true);
+      if (medicalInfoTimeout.current) clearTimeout(medicalInfoTimeout.current);
+    } else if (showMedicalInfo) {
+      // Start 30s timer when alert is cleared
+      if (medicalInfoTimeout.current) clearTimeout(medicalInfoTimeout.current);
+      medicalInfoTimeout.current = setTimeout(() => setShowMedicalInfo(false), 30000);
+    }
+    return () => {
+      if (medicalInfoTimeout.current) clearTimeout(medicalInfoTimeout.current);
+    };
+  }, [activeAlert]);
+
+  // When admin simulates emergency, also show medical info
+  const handleSimulateEmergency = () => {
+    setCurrentMetrics(prev => ({ ...prev, heartRate: 0, oxygen: 0, movement: 0 }));
+    setShowMedicalInfo(true);
+    if (medicalInfoTimeout.current) clearTimeout(medicalInfoTimeout.current);
+  };
+
+  useEffect(() => {
+    // Fetch profile defaults
+    const fetchDefaults = async () => {
+      const supabase = getSupabaseClient();
+      const { data } = await supabase.from('profile_defaults').select('*').limit(1).single();
+      if (data) setDefaults(data);
+    };
+    fetchDefaults();
+  }, []);
+
   if (userLoading || profileLoading) return <div>Loading...</div>;
   if (!user || !profile) return null;
 
@@ -318,6 +359,9 @@ export default function DashboardPage() {
       }));
     }, 5000);
   };
+
+  // At the top of the DashboardPage function, after profile is loaded
+  const isAdmin = profile && profile.is_admin;
 
   return (
     <div className="min-h-screen bg-blue-50 dark:bg-gray-900 p-4 space-y-6 dashboard-container">
@@ -376,7 +420,7 @@ export default function DashboardPage() {
       )}
 
       {/* Metrics Summary Cards */}
-      <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+      <div className="flex flex-row space-x-4">
         <div className="flex-1 bg-white dark:bg-gray-800 px-[12px] py-6 rounded-xl shadow-lg border-t-8 border-blue-400 flex flex-col items-center">
           <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Heart Rate</h3>
           <p className="text-2xl font-bold text-red-600 dark:text-red-400">{currentMetrics.heartRate} BPM</p>
@@ -428,6 +472,52 @@ export default function DashboardPage() {
             <span className="inline-block w-4 h-4 rounded-full bg-green-500"></span>
             <span className="text-sm text-gray-700 dark:text-gray-200 font-medium">Movement</span>
           </div>
+        </div>
+      </div>
+
+      {/* Emergency Information Section (always visible) */}
+      <div className="bg-red-50 dark:bg-red-900 p-6 rounded-xl shadow-lg border-t-8 border-red-400 mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-red-700 dark:text-red-200">Emergency Information</h3>
+          <span className="text-sm text-red-700 dark:text-red-200 ml-4">Please edit these details on the Profile Page.</span>
+        </div>
+        {/* Emergency Contacts */}
+        <div className="mb-4">
+          <h4 className="font-semibold mb-2">Emergency Contact 1</h4>
+          <div className="ml-2 break-words">
+            <div><span className="font-medium">Name:</span> <span className="break-all">{profile.emergency_contact1_name || 'None provided'}</span></div>
+            <div><span className="font-medium">Mobile #:</span> <span className="break-all">{profile.emergency_contact1_phone || 'None provided'}</span></div>
+            <div><span className="font-medium">Email:</span> <span className="break-all">{profile.emergency_contact1_email || 'None provided'}</span></div>
+          </div>
+        </div>
+        <div className="mb-4">
+          <h4 className="font-semibold mb-2">Emergency Contact 2</h4>
+          <div className="ml-2 break-words">
+            <div><span className="font-medium">Name:</span> <span className="break-all">{profile.emergency_contact2_name || 'None provided'}</span></div>
+            <div><span className="font-medium">Mobile #:</span> <span className="break-all">{profile.emergency_contact2_phone || 'None provided'}</span></div>
+            <div><span className="font-medium">Email:</span> <span className="break-all">{profile.emergency_contact2_email || 'None provided'}</span></div>
+          </div>
+        </div>
+        <div className="mb-4">
+          <h4 className="font-semibold mb-2">Emergency Contact 3</h4>
+          <div className="ml-2 break-words">
+            <div><span className="font-medium">Name:</span> <span className="break-all">{profile.emergency_contact3_name || 'None provided'}</span></div>
+            <div><span className="font-medium">Mobile #:</span> <span className="break-all">{profile.emergency_contact3_phone || 'None provided'}</span></div>
+            <div><span className="font-medium">Email:</span> <span className="break-all">{profile.emergency_contact3_email || 'None provided'}</span></div>
+          </div>
+        </div>
+        {/* Medical Info */}
+        <div className="mb-2">
+          <div className="font-semibold">Relevant Medical History</div>
+          <div className="whitespace-pre-line break-words">{profile.medical_history || defaults.medical_history_default}</div>
+        </div>
+        <div className="mb-2">
+          <div className="font-semibold">Current Medications:</div>
+          <div className="whitespace-pre-line break-words">{profile.medications || defaults.medications_default}</div>
+        </div>
+        <div>
+          <div className="font-semibold">Special Notes:</div>
+          <div className="whitespace-pre-line break-words">{profile.special_notes || defaults.special_notes_default}</div>
         </div>
       </div>
     </div>

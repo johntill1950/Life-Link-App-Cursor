@@ -47,6 +47,11 @@ export default function ProfilePage() {
     { name: '', phone: '', email: '', relationship: '' },
     { name: '', phone: '', email: '', relationship: '' }
   ]);
+  const [defaults, setDefaults] = useState({
+    medical_history_default: '',
+    medications_default: '',
+    special_notes_default: ''
+  });
   const supabase = getSupabaseClient();
 
   useEffect(() => {
@@ -90,7 +95,14 @@ export default function ProfilePage() {
       }
     };
 
+    // Fetch profile defaults
+    const fetchDefaults = async () => {
+      const { data } = await supabase.from('profile_defaults').select('*').limit(1).single();
+      if (data) setDefaults(data);
+    };
+
     attemptFetch();
+    fetchDefaults();
 
     return () => {
       mounted = false;
@@ -319,7 +331,7 @@ export default function ProfilePage() {
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Relevant Medical History</h3>
               <textarea
                 placeholder="Please be brief...."
-                value={profile.medical_history || ''}
+                value={profile.medical_history || defaults.medical_history_default}
                 onChange={e => handleChange("medical_history", e.target.value)}
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 maxLength={500}
@@ -331,7 +343,7 @@ export default function ProfilePage() {
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Current Medications</h3>
               <textarea
                 placeholder="Please be brief...."
-                value={profile.medications || ''}
+                value={profile.medications || defaults.medications_default}
                 onChange={e => handleChange("medications", e.target.value)}
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 maxLength={500}
@@ -343,7 +355,7 @@ export default function ProfilePage() {
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Special Notes</h3>
               <textarea
                 placeholder="Please be brief...."
-                value={profile.special_notes || ''}
+                value={profile.special_notes || defaults.special_notes_default}
                 onChange={e => handleChange("special_notes", e.target.value)}
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-gray-100 dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 placeholder:text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 maxLength={500}
