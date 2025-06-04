@@ -112,7 +112,7 @@ export default function AboutPage() {
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">About</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">About (Live)</label>
               <div className={`${textSize} prose dark:prose-invert bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg min-h-[120px]`} dangerouslySetInnerHTML={{ __html: about }} />
             </div>
 
